@@ -1,16 +1,37 @@
-# linki3
+# Linki3
 
-This template should help get you started developing with Vue 3 in Vite.
+Linki3 is a custom-built clone of Linktree, developed with **Vue 3**, **Vite**, and **Supabase**.  
+It allows users to create and share personalized profile pages with links and taglines.
 
-## Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## ✨ Features
 
-## Customize configuration
+- User authentication (Supabase)
+- Create, edit, and manage multiple profiles
+- Each profile has:
+  - Display name, tagline, and description
+  - Custom list of links (with titles and URLs)
+  - Public slug-based URL (e.g. `/p/username`)
+  - QR code generation for sharing
+- Responsive layout with mobile-friendly navigation
+- Built using **Vue 3**, **Pinia**, **Vue Router**, and **Tailwind CSS**
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+---
 
-## Project Setup
+## 🔧 Tech Stack
+
+- [Vue 3](https://vuejs.org/)
+- [Vite](https://vitejs.dev/)
+- [Supabase](https://supabase.com/)
+- [Pinia](https://pinia.vuejs.org/) for state management
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [qrcode.vue](https://github.com/scopewu/qrcode.vue) for QR generation
+
+---
+
+## 🛠 Project Setup
+
 
 ```sh
 npm install
