@@ -2,7 +2,7 @@
   <div>
     <h2 class="text-3xl font-semibold text-center mb-8">Ingresar</h2>
     
-    <form @submit.prevent="handleLogin" class="space-y-6">
+    <form @submit.prevent="login" class="space-y-6">
       <div>
         <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email</label>
         <input
@@ -11,8 +11,11 @@
           type="email"
           placeholder="tu@email.com"
           required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          :class="['w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2', 
+                  validateEmail(email) || !email ? 'border-gray-300 focus:ring-indigo-500' : 'border-red-500 focus:ring-red-500']"
+          @blur="validateEmail(email)"
         />
+        <p v-if="email && !validateEmail(email)" class="mt-1 text-sm text-red-600">Email inválido</p>
       </div>
 
       <div>
@@ -23,51 +26,45 @@
           type="password"
           placeholder="********"
           required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          :class="['w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2', 
+                  validatePassword(password) || !password ? 'border-gray-300 focus:ring-indigo-500' : 'border-red-500 focus:ring-red-500']"
+          @blur="validatePassword(password)"
         />
+        <p v-if="password && !validatePassword(password)" class="mt-1 text-sm text-red-600">
+          La contraseña debe tener al menos 6 caracteres
+        </p>
       </div>
 
       <button
         type="submit"
-        class="w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-700 transition"
+        :disabled="loading"
+        :class="['w-full bg-indigo-600 text-white py-2 rounded-md font-semibold transition',
+                loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-indigo-700']"
       >
-        Ingresar
+        <span v-if="loading">Ingresando...</span>
+        <span v-else>Ingresar</span>
       </button>
     </form>
 
-    <p v-if="errorMessage" class="mt-4 text-center text-red-600 font-semibold">
-      {{ errorMessage }}
+    <p v-if="error" class="mt-4 text-center text-red-600 font-semibold">
+      {{ error }}
     </p>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useUserStore } from '@/stores/users'
-import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
-const email = ref('')
-const password = ref('')
-const errorMessage = ref('')
+const { 
+  email,
+  password,
+  error,
+  loading,
+  login,
+  validateEmail,
+  validatePassword
+} = useAuth()
 
-const userStore = useUserStore()
-const router = useRouter()
-
-async function handleLogin() {
-  errorMessage.value = ''
-  const { error } = await userStore.login(email.value, password.value)
-
-  if (error) {
-    errorMessage.value = error.message
-    return
-  }
-  /* 
-  if (!userStore.activeProfile) {
-    router.push('/settings') // Redirigir para crear primer perfil
-  } else {
-    router.push('/profiles')
-  }
-  */
-  router.push('/profiles')
-}
+// Limpiar mensajes al montar el componente
+error.value = ''
 </script>
