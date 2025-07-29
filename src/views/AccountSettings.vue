@@ -8,10 +8,7 @@
         <div class="px-4 py-2 border border-gray-300 rounded-md bg-gray-50">{{ user.email }}</div>
       </div>
 
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de usuario</label>
-        <div class="px-4 py-2 border border-gray-300 rounded-md bg-gray-50">{{ user.username }}</div>
-      </div>
+      
 
       <RouterLink
         to="/profiles"

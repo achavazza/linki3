@@ -8,6 +8,9 @@
       <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">
         {{ profile.display_name }}
       </h1>
+      <h1 class="text-1xl font-bold text-center mb-6 text-gray-800">
+        {{ profile.tagline }}
+      </h1>
       <p class="text-center text-gray-600 mb-8 whitespace-pre-line">
         {{ profile.description }}
       </p>

@@ -69,28 +69,60 @@
       </div>
     </form>
 
-    <section class="mt-10 text-center" v-if="profileSlug">
-      <h3 class="text-lg font-semibold mb-2">Perfil público</h3>
-      <a
-        :href="`${baseUrl}/p/${profileSlug}`"
-        target="_blank"
-        class="text-indigo-600 hover:underline break-all"
-      >
-        {{ baseUrl }}/p/{{ profileSlug }}
-      </a>
+    <section class="mt-10" v-if="profileSlug">
+    <h3 class="text-lg font-semibold mb-2">Perfil público</h3>
+        <div class="border p-4 rounded-md shadow-sm flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+          <div class="flex-1 flex-col min-w-0">
+            <h2 class="text-lg font-semibold truncate">{{ displayName }}</h2>
+            <p class="text-gray-600 text-sm mb-2 truncate">{{ tagline || description }}</p>
+          </div>
 
-      <div class="mt-4 inline-block mx-auto">
-        <qrcode-vue :value="`${baseUrl}/p/${profileSlug}`" :size="160" />
+          <!-- QR + Link -->
+          <div class="flex flex-col items-end gap-6">
+            <div class="gap-2  text-right">
+              <a
+                :href="`${baseUrl}/p/${profileSlug}`"
+                target="_blank"
+                class="text-indigo-700 font-mono text-xs truncate hover:underline"
+              >
+                <!--{{ baseUrl }}/p/{{ slug }}-->
+                /{{ profileSlug }}
+              </a> 
+            </div>
+            <div class="w-36 h-36 flex-shrink-0">
+              <qrcode-vue :value="`${baseUrl}/p/${profileSlug}`" :size="150" />
+            </div>
+        </div>
+
+       
+        
       </div>
     </section>
+
+     <div ref="canvasWrapper" class="text-center mt-4 hidden">
+        <qrcode-vue :value="`${baseUrl}/p/${profileSlug}`" :size="150" level="M" render-as="canvas" />
+      </div>
+      <div ref="svgWrapper" class="hidden">
+        <qrcode-vue ref="svgQrRef" :value="`${baseUrl}/p/${profileSlug}`" :size="150" level="M" render-as="svg" />
+      </div>
+
+      <div class="flex justify-center gap-4 mt-4">
+        <button @click="downloadQr" type="button" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+          Descargar QR
+        </button>
+        <button @click="downloadQrSvg" type="button" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+          Descargar QR SVG
+        </button>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/users'
 import { supabase } from '@/supabase'
+import { v4 as uuidv4 } from 'uuid'
 import QrcodeVue from 'qrcode.vue'
 
 const route = useRoute()
@@ -104,6 +136,9 @@ const description = ref('')
 const links = ref([])
 const profileSlug = ref('')
 const baseUrl = window.location.origin
+const url = ref(null)
+const canvasWrapper = ref(null)
+const svgWrapper = ref(null)
 
 onMounted(async () => {
   const { data, error } = await supabase
@@ -158,10 +193,16 @@ async function saveProfile() {
   await supabase.from('links').delete().eq('profile_id', profileId)
 
   const formattedLinks = links.value.map((link, i) => {
-    let url = link.url.trim()
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url
-    return { ...link, url, position: i, profile_id: profileId }
-  })
+  let url = link.url.trim()
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+  return {
+    id: uuidv4(),  // ⚠️ nuevo ID para todos
+    title: link.title,
+    url,
+    position: i,
+    profile_id: profileId,
+  }
+})
 
   const { error: insertError } = await supabase.from('links').insert(formattedLinks)
 
@@ -171,6 +212,54 @@ async function saveProfile() {
     alert('Perfil actualizado correctamente')
     router.push('/profiles')
   }
+}
+
+
+async function downloadQr() {
+  await nextTick()
+
+  if (!canvasWrapper.value) {
+    alert('No se encontró el contenedor del QR')
+    return
+  }
+
+  const canvas = canvasWrapper.value.querySelector('canvas')
+  if (!canvas) {
+    alert('No se encontró el canvas dentro del QR')
+    return
+  }
+
+  const url = canvas.toDataURL('image/png')
+  triggerDownload(url, `QR-${displayName.value}.png`)
+}
+
+async function downloadQrSvg() {
+  await nextTick()
+  if (!svgWrapper.value) {
+    alert('No se encontró el contenedor del QR')
+    return
+  }
+  const svg = svgWrapper.value.querySelector('svg')
+  if (!svg) {
+    alert('No se encontró el SVG dentro del QR')
+    return
+  }
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  const serializer = new XMLSerializer()
+  const svgString = serializer.serializeToString(svg)
+  const blob = new Blob([svgString], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+
+  triggerDownload(url, `QR-${displayName.value}.svg`)
+
+  URL.revokeObjectURL(url)
+}
+
+function triggerDownload(url, filename) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
 }
 </script>
 

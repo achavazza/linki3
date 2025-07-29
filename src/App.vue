@@ -19,7 +19,7 @@
         <template v-else>
           <RouterLink to="/profiles" active-class="text-indigo-600 font-semibold" class="hover:text-indigo-600">Profiles</RouterLink>
           <RouterLink to="/settings" active-class="text-indigo-600 font-semibold" class="hover:text-indigo-600">Settings</RouterLink>
-          <button @click="logout" class="text-indigo-600 font-semibold hover:text-indigo-800 cursor-pointer bg-transparent border-none">
+          <button @click="handleLogout" class="text-indigo-600 font-semibold hover:text-indigo-800 cursor-pointer bg-transparent border-none">
             Logout
           </button>
         </template>
@@ -69,15 +69,13 @@
         exact-active-class="text-indigo-600 font-semibold"
         class="block px-6 py-3 border-b border-gray-200 hover:bg-indigo-50"
         @click="closeMenu"
-        >Home</RouterLink
-      >
+        >Home</RouterLink>
       <RouterLink
         to="/about"
         active-class="text-indigo-600 font-semibold"
         class="block px-6 py-3 border-b border-gray-200 hover:bg-indigo-50"
         @click="closeMenu"
-        >About</RouterLink
-      >
+        >About</RouterLink>
 
       <!-- Mostrar si NO está logueado -->
       <template v-if="!user">
@@ -119,19 +117,20 @@
     </nav>
   </header>
 
-  <main class="container mx-auto max-w-3xl p-6 mt-6 bg-white rounded-lg shadow-md">
+  <main class="container mx-auto max-w-xl p-6 mt-6 bg-white rounded-3xl border border-gray-300 mb-10">
     <RouterView />
   </main>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { useRouter, RouterLink, RouterView } from 'vue-router'
 import { useUserStore } from './stores/users'
 
 const menuOpen = ref(false)
 const userStore = useUserStore()
-const user = computed(() => userStore.user)  // reactivo!
+const user = computed(() => userStore.user) 
+const router = useRouter()
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -144,6 +143,7 @@ function closeMenu() {
 function handleLogout() {
   userStore.logout()
   closeMenu()
+  router.push('/')
 }
 
 </script>

@@ -61,11 +61,13 @@ async function handleLogin() {
     errorMessage.value = error.message
     return
   }
-
+  /* 
   if (!userStore.activeProfile) {
     router.push('/settings') // Redirigir para crear primer perfil
   } else {
-    router.push('/dashboard')
+    router.push('/profiles')
   }
+  */
+  router.push('/profiles')
 }
 </script>

@@ -18,6 +18,7 @@ export const useUserStore = defineStore('user', {
   },
   actions: {
     async register({ email, password, username }) {
+      this.logout() //primero deslogueate de la otra cuenta
       const { data: existing, error: checkError } = await supabase
         .from('users')
         .select('id')
@@ -50,6 +51,7 @@ export const useUserStore = defineStore('user', {
     },
 
     async login(email, password) {
+      this.logout() //primero deslogueate de la otra cuenta
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (!error) {

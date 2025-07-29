@@ -19,7 +19,7 @@
         class="border p-4 rounded-md shadow-sm flex flex-col md:flex-row md:justify-between md:items-end gap-4"
       >
         <!-- Información principal -->
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 flex-col  min-w-0">
           <h2 class="text-lg font-semibold truncate">{{ profile.display_name }}</h2>
           <p class="text-gray-600 text-sm mb-2 truncate">{{ profile.tagline || profile.description }}</p>
           <router-link
@@ -38,20 +38,22 @@
 
         <!-- QR + Link -->
         <div class="flex flex-col items-end gap-6">
-          <div class="w-36 h-36 flex-shrink-0">
-            <qrcode-vue :value="`${baseUrl}/p/${profile.slug}`" :size="144" />
-          </div>
-          <div class=" gap-2 min-w-[180px]">
+          <div class="gap-2  text-right">
             <a
               :href="`${baseUrl}/p/${profile.slug}`"
               target="_blank"
               class="text-indigo-700 font-mono text-xs truncate hover:underline"
             >
-              {{ baseUrl }}/p/{{ profile.slug }}
+              <!--{{ baseUrl }}/p/{{ profile.slug }}-->
+              /{{ profile.slug }}
             </a>
             
             
           </div>
+          <div class="w-36 h-36 flex-shrink-0">
+            <qrcode-vue :value="`${baseUrl}/p/${profile.slug}`" :size="150" />
+          </div>
+          
           
         </div>
       </li>
