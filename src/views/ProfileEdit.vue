@@ -3,52 +3,58 @@
     <h2 class="text-2xl font-bold text-center mb-6">Editar Perfil</h2>
 
     <form @submit.prevent="handleSave" class="space-y-6">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre público</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Nombre público</span>
+        </label>
         <input 
           v-model="displayName" 
-          :class="['w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2', 
-                  errorField === 'displayName' ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+          type="text" 
+          class="input input-bordered"
+          :class="{ 'input-error': errorField === 'displayName' }"
         />
-        <p v-if="errorField === 'displayName'" class="mt-1 text-sm text-red-600">
-          El nombre público es obligatorio
-        </p>
+        <label v-if="errorField === 'displayName'" class="label">
+          <span class="label-text-alt text-error">El nombre público es obligatorio</span>
+        </label>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Tagline</span>
+        </label>
         <input 
           v-model="tagline" 
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+          type="text" 
+          class="input input-bordered"
         />
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Descripción</span>
+        </label>
         <textarea
           v-model="description"
           rows="4"
-          class="w-full px-4 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="textarea textarea-bordered"
         ></textarea>
       </div>
 
-      <div>
-        <h3 class="text-lg font-semibold mt-6 mb-2">Links</h3>
+      <div class="form-control">
+        <h3 class="text-lg font-semibold mb-2">Links</h3>
         
-        <!-- Lista de links existentes -->
         <div v-for="(link, index) in links" :key="index" class="flex gap-3 items-center mb-2">
-          <!-- Mostrar input para website/custom, label para otros -->
           <template v-if="shouldShowTitleInput(link.type)">
             <input
               v-model="link.title"
               placeholder="Título del link"
-              :class="['flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2',
-                      link.error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+              class="input input-bordered flex-1"
+              :class="{ 'input-error': link.error }"
               @input="link.error = false"
             />
           </template>
           <template v-else>
-            <div class="flex-1 px-3 py-2 bg-gray-100 rounded-md">
+            <div class="input flex-1 bg-base-200">
               {{ getLinkTypeLabel(link.type) }}
             </div>
           </template>
@@ -56,14 +62,14 @@
           <input
             v-model="link.url"
             :placeholder="getLinkPlaceholder(link.type)"
-            :class="['flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2',
-                    link.error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+            class="input input-bordered flex-1"
+            :class="{ 'input-error': link.error }"
             @input="formatSocialUrl(link)"
           />
 
           <button
             type="button"
-            class="text-red-600 font-semibold hover:text-red-800"
+            class="btn btn-circle btn-sm btn-error"
             @click="removeLink(index)"
             aria-label="Eliminar link"
           >
@@ -71,50 +77,48 @@
           </button>
         </div>
 
-        <!-- Botones principales para redes sociales comunes -->
         <div class="flex gap-2 mt-2 flex-wrap">
           <button
             type="button"
             @click="addLink('website')"
-            class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
+            class="btn btn-primary btn-sm"
           >
             + Sitio Web
           </button>
           <button
             type="button"
             @click="addLink('instagram')"
-            class="bg-pink-600 text-white px-3 py-1 rounded-md hover:bg-pink-700 transition"
+            class="btn btn-primary btn-sm bg-pink-600 border-pink-600"
           >
             + Instagram
           </button>
           <button
             type="button"
             @click="addLink('facebook')"
-            class="bg-blue-800 text-white px-3 py-1 rounded-md hover:bg-blue-900 transition"
+            class="btn btn-primary btn-sm bg-blue-800 border-blue-800"
           >
             + Facebook
           </button>
           <button
             type="button"
             @click="addLink('whatsapp')"
-            class="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition"
+            class="btn btn-primary btn-sm bg-green-600 border-green-600"
           >
             + WhatsApp
           </button>
           <button
             type="button"
             @click="addLink('email')"
-            class="bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-700 transition"
+            class="btn btn-primary btn-sm bg-gray-600 border-gray-600"
           >
             + Email
           </button>
         </div>
 
-        <!-- Selector para otras opciones -->
         <div class="flex gap-2 mt-4 items-center">
           <select
             v-model="selectedLinkType"
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="select select-bordered flex-1"
           >
             <option value="">Otra red social...</option>
             <option 
@@ -125,65 +129,62 @@
               {{ type.label }}
             </option>
           </select>
-
           <button
             type="button"
             @click="addSelectedLink"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+            class="btn btn-primary"
             :disabled="!selectedLinkType"
           >
             Agregar
           </button>
         </div>
-
-        <p v-if="errorField === 'links'" class="mt-1 text-sm text-red-600">
-          Todos los links deben tener título y URL válida
-        </p>
       </div>
 
       <div class="flex gap-4 justify-end mt-6">
         <router-link
           to="/profiles"
-          class="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-100 transition"
+          class="btn btn-ghost"
         >
           Cancelar
         </router-link>
         <button
           type="submit"
+          class="btn btn-primary"
           :disabled="loading"
-          :class="['bg-indigo-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-indigo-700 transition',
-                  loading ? 'opacity-70 cursor-not-allowed' : '']"
         >
-          <span v-if="loading">Guardando...</span>
-          <span v-else>Guardar Cambios</span>
+          <span v-if="loading" class="loading loading-spinner"></span>
+          {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
       </div>
 
-      <p v-if="error" class="mt-4 text-center text-red-600 font-semibold">
-        {{ error }}
-      </p>
+      <div v-if="error" class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
     </form>
 
     <section class="mt-10" v-if="profileSlug">
       <h3 class="text-lg font-semibold mb-2">Perfil público</h3>
-      <div class="border p-4 rounded-md shadow-sm flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-        <div class="flex-1 flex-col min-w-0">
-          <h2 class="text-lg font-semibold truncate">{{ displayName }}</h2>
-          <p class="text-gray-600 text-sm mb-2 truncate">{{ tagline || description }}</p>
-        </div>
+      <div class="card bg-base-100 shadow">
+        <div class="card-body flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+          <div class="flex-1">
+            <h2 class="card-title truncate">{{ displayName }}</h2>
+            <p class="text-gray-600 text-sm truncate">{{ tagline || description }}</p>
+          </div>
 
-        <div class="flex flex-col items-end gap-6">
-          <div class="gap-2 text-right">
+          <div class="flex flex-col items-end gap-2">
             <a
               :href="`${baseUrl}/p/${profileSlug}`"
               target="_blank"
-              class="text-indigo-700 font-mono text-xs truncate hover:underline"
+              class="text-primary font-mono text-xs hover:underline"
             >
               /{{ profileSlug }}
             </a>
-          </div>
-          <div class="w-36 h-36 flex-shrink-0">
-            <qrcode-vue :value="`${baseUrl}/p/${profileSlug}`" :size="150" />
+            <div class="w-36 h-36">
+              <qrcode-vue :value="`${baseUrl}/p/${profileSlug}`" :size="150" />
+            </div>
           </div>
         </div>
       </div>
@@ -192,33 +193,31 @@
     <div class="flex justify-center gap-4 mt-4">
       <button 
         @click="downloadQr" 
-        type="button" 
-        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+        class="btn btn-primary"
       >
         Descargar QR
       </button>
       <button 
         @click="downloadQrSvg" 
-        type="button" 
-        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+        class="btn btn-primary"
       >
         Descargar QR SVG
       </button>
     </div>
 
-    <div class="border border-red-400 bg-red-100 pt-6 mt-10 flex flex-row gap-2 rounded-md p-6 justify-between">
-      <div class="flex items-center">
-        <h3 class="text-lg font-semibold text-red-700">Zona peligrosa</h3>
+    <div class="alert alert-error mt-10">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <h3 class="font-bold">Zona peligrosa</h3>
       </div>
-      <div class="flex">
-        <button
-          type="button"
-          @click="showDeleteConfirm(profileId)"
-          class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
-        >
-          Eliminar permanentemente
-        </button>
-      </div>
+      <button
+        @click="showDeleteConfirm(profileId)"
+        class="btn btn-error btn-sm"
+      >
+        Eliminar permanentemente
+      </button>
     </div>
   </div>
 
@@ -252,11 +251,6 @@ const selectedLinkType = ref('')
 
 const linkTypesStore = useLinkTypesStore()
 
-// Exponer funciones de la store para usar en el template
-const shouldShowTitleInput = linkTypesStore.shouldShowTitleInput
-const getLinkPlaceholder = linkTypesStore.getLinkPlaceholder
-const otherLinkTypes = computed(() => linkTypesStore.otherLinkTypes)
-
 const {
   displayName,
   tagline,
@@ -270,14 +264,15 @@ const {
   addLink,
   removeLink,
   saveProfile,
-  loadProfile: originalLoadProfile
+  loadProfile
 } = useProfiles(profileId)
 
 const { downloadQr, downloadQrSvg, QrcodeVue } = useQr()
 
-const getLinkTypeLabel = (type) => {
-  return linkTypesStore.getLinkType(type).label
-}
+const getLinkTypeLabel = (type) => linkTypesStore.getLinkType(type).label
+const shouldShowTitleInput = (type) => linkTypesStore.shouldShowTitleInput(type)
+const getLinkPlaceholder = (type) => linkTypesStore.getLinkPlaceholder(type)
+const otherLinkTypes = computed(() => linkTypesStore.otherLinkTypes)
 
 const formatSocialUrl = (link) => {
   link.error = false
@@ -287,31 +282,6 @@ const formatSocialUrl = (link) => {
   }
 }
 
-const loadProfileWithTypes = async () => {
-  try {
-    await originalLoadProfile()
-    // No necesitamos ensureLinkTypes si la API ya devuelve los tipos correctos
-  } catch (err) {
-    console.error('Error loading profile:', err)
-    toast.error('Error al cargar el perfil')
-  }
-}
-
-const ensureLinkTypes = (loadedLinks) => {
-  return loadedLinks.map(link => {
-    // Si ya tiene type, solo asegurar que tenga needsName
-    const linkType = linkTypesStore.getLinkType(link.type || 'custom')
-    return {
-      ...link,
-      type: link.type || 'custom',
-      needsName: linkType.needsName || false,
-      error: false
-    }
-  })
-}
-
-const loadProfile = loadProfileWithTypes
-
 const addSelectedLink = () => {
   if (selectedLinkType.value) {
     addLink(selectedLinkType.value)
@@ -320,23 +290,18 @@ const addSelectedLink = () => {
 }
 
 const handleSave = async () => {
-  try {
-    // Formatear URLs antes de guardar
-    links.value.forEach(link => {
-      if (link.url) {
-        link.url = linkTypesStore.formatSocialUrl(link)
-      }
-    })
-    
-    const success = await saveProfile()
-    if (success) {
-      toast.success('Perfil guardado correctamente')
-      setTimeout(() => {
-        router.push('/profiles')
-      }, 1000)
+  links.value.forEach(link => {
+    if (link.url) {
+      link.url = linkTypesStore.formatSocialUrl(link)
     }
-  } catch (err) {
-    toast.error(err.message || 'Error al guardar el perfil')
+  })
+  
+  const success = await saveProfile()
+  if (success) {
+    toast.success('Perfil guardado correctamente')
+    setTimeout(() => {
+      router.push('/profiles')
+    }, 1000)
   }
 }
 

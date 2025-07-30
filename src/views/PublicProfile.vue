@@ -1,44 +1,42 @@
 <template>
-    <div v-if="profileNotFound || !profileActive" class="text-center py-20">
-      <h1 class="text-2xl font-bold text-gray-900 mb-4">Perfil no encontrado</h1>
-      <p class="text-gray-600">El perfil que estás buscando no existe o ha sido desactivado.</p>
-      <router-link 
-        to="/" 
-        class="mt-6 inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700"
-      >
-        Volver al inicio
-      </router-link>
+  <div v-if="profileNotFound || !profileActive" class="hero min-h-screen bg-base-200">
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold">Perfil no encontrado</h1>
+        <p class="py-6">El perfil que estás buscando no existe o ha sido desactivado.</p>
+        <router-link to="/" class="btn btn-primary">
+          Volver al inicio
+        </router-link>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="container mx-auto px-4 py-8">
+    <div class="card bg-base-100 shadow-lg">
+      <div class="card-body items-center text-center">
+        <h1 class="card-title text-3xl">{{ displayName }}</h1>
+        <h2 v-if="tagline" class="text-xl text-gray-600">{{ tagline }}</h2>
+        <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
+      </div>
     </div>
 
-    <div v-else >
-    <div class="px-6 py-8 text-center">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">
-        {{ displayName }}
-      </h1>
-      <h2 v-if="tagline" class="text-xl text-gray-600 mb-4">
-        {{ tagline }}
-      </h2>
-      <p v-if="description" class="text-gray-600 whitespace-pre-line">
-        {{ description }}
-      </p>
-    </div>
-
-    <!-- Links -->
-    <div class="px-6 py-6  border-t border-gray-200" v-if="links.length">
-      <ul class="space-y-4">
-        <li v-for="link in links" :key="link.id">
+    <div v-if="links.length" class="card bg-base-100 shadow-lg mt-6">
+      <div class="card-body">
+        <div class="space-y-3">
           <a
+            v-for="link in links"
+            :key="link.id"
             :href="helpers.formatUrl(link.url)"
             target="_blank"
             rel="noopener noreferrer"
-            class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md transition duration-150 ease-in-out transform hover:scale-105"
+            class="btn btn-primary btn-block"
           >
             {{ link.title }}
           </a>
-        </li>
-      </ul>
+        </div>
+      </div>
     </div>
-    </div>
+  </div>
 </template>
 
 <script setup>
@@ -51,6 +49,7 @@ import { useProfiles } from '@/composables/useProfiles'
 const route = useRoute()
 const slug = route.params.slug
 const profileNotFound = ref(false)
+const profileActive = ref(false)
 
 const {
   displayName,
@@ -60,18 +59,16 @@ const {
   loading,
   error,
   loadProfile
-} = useProfiles(null, slug) // Pasamos null para profileId y el slug
+} = useProfiles(null, slug)
 
 onMounted(async () => {
   try {
     loading.value = true
     await loadProfile()
     
-    // Verificar si el perfil existe y está activo
     if (displayName.value === '' || error.value) {
       profileNotFound.value = true
     } else {
-      // Necesitamos verificar el estado active del perfil directamente desde la API
       const { data: profileData, error: profileError } = await api.getBySlug('profiles', slug)
       
       if (profileError || !profileData) {

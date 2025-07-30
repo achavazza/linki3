@@ -3,51 +3,61 @@
     <h1 class="text-2xl font-bold mb-6 text-center">Crear Nuevo Perfil</h1>
 
     <form @submit.prevent="handleSave" class="space-y-6">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre público</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Nombre público</span>
+        </label>
         <input 
           v-model="displayName" 
-          :class="['w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2', 
-                  errorField === 'displayName' ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+          type="text" 
+          placeholder="Nombre público" 
+          class="input input-bordered"
+          :class="{ 'input-error': errorField === 'displayName' }"
         />
-        <p v-if="errorField === 'displayName'" class="mt-1 text-sm text-red-600">
-          El nombre público es obligatorio
-        </p>
+        <label v-if="errorField === 'displayName'" class="label">
+          <span class="label-text-alt text-error">El nombre público es obligatorio</span>
+        </label>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Tagline</span>
+        </label>
         <input 
           v-model="tagline" 
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+          type="text" 
+          placeholder="Tagline" 
+          class="input input-bordered"
         />
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Descripción</span>
+        </label>
         <textarea
           v-model="description"
           rows="4"
-          class="w-full px-4 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          placeholder="Descripción"
+          class="textarea textarea-bordered"
         ></textarea>
       </div>
 
-      <div>
-        <h3 class="text-lg font-semibold mt-6 mb-2">Links</h3>
+      <div class="form-control">
+        <h3 class="text-lg font-semibold mb-2">Links</h3>
         
-        <!-- Lista de links -->
         <div v-for="(link, index) in links" :key="index" class="flex gap-3 items-center mb-2">
           <template v-if="shouldShowTitleInput(link.type)">
             <input
               v-model="link.title"
               placeholder="Título del link"
-              :class="['flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2',
-                      link.error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+              class="input input-bordered flex-1"
+              :class="{ 'input-error': link.error }"
               @input="link.error = false"
             />
           </template>
           <template v-else>
-            <div class="flex-1 px-3 py-2 bg-gray-100 rounded-md">
+            <div class="input flex-1 bg-base-200">
               {{ getLinkTypeLabel(link.type) }}
             </div>
           </template>
@@ -55,14 +65,14 @@
           <input
             v-model="link.url"
             :placeholder="getLinkPlaceholder(link.type)"
-            :class="['flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2',
-                    link.error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500']"
+            class="input input-bordered flex-1"
+            :class="{ 'input-error': link.error }"
             @input="formatSocialUrl(link)"
           />
 
           <button
             type="button"
-            class="text-red-600 font-semibold hover:text-red-800"
+            class="btn btn-circle btn-sm btn-error"
             @click="removeLink(index)"
             aria-label="Eliminar link"
           >
@@ -70,40 +80,39 @@
           </button>
         </div>
 
-        <!-- Botones principales y selector (igual que en ProfileEdit) -->
         <div class="flex gap-2 mt-2 flex-wrap">
           <button
             type="button"
             @click="addLink('website')"
-            class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
+            class="btn btn-primary btn-sm"
           >
             + Sitio Web
           </button>
           <button
             type="button"
             @click="addLink('instagram')"
-            class="bg-pink-600 text-white px-3 py-1 rounded-md hover:bg-pink-700 transition"
+            class="btn btn-primary btn-sm bg-pink-600 border-pink-600"
           >
             + Instagram
           </button>
           <button
             type="button"
             @click="addLink('facebook')"
-            class="bg-blue-800 text-white px-3 py-1 rounded-md hover:bg-blue-900 transition"
+            class="btn btn-primary btn-sm bg-blue-800 border-blue-800"
           >
             + Facebook
           </button>
           <button
             type="button"
             @click="addLink('whatsapp')"
-            class="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition"
+            class="btn btn-primary btn-sm bg-green-600 border-green-600"
           >
             + WhatsApp
           </button>
           <button
             type="button"
             @click="addLink('email')"
-            class="bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-700 transition"
+            class="btn btn-primary btn-sm bg-gray-600 border-gray-600"
           >
             + Email
           </button>
@@ -112,7 +121,7 @@
         <div class="flex gap-2 mt-4 items-center">
           <select
             v-model="selectedLinkType"
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="select select-bordered flex-1"
           >
             <option value="">Otra red social...</option>
             <option 
@@ -126,7 +135,7 @@
           <button
             type="button"
             @click="addSelectedLink"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+            class="btn btn-primary"
             :disabled="!selectedLinkType"
           >
             Agregar
@@ -136,20 +145,20 @@
 
       <section class="mt-10">
         <h3 class="text-lg font-semibold mb-2">Perfil público</h3>
-        <div class="border p-4 rounded-md shadow-sm flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-          <div class="flex-1 flex-col min-w-0">
-            <h2 class="text-lg font-semibold truncate">{{ displayName }}</h2>
-            <p class="text-gray-600 text-sm mb-2 truncate">{{ tagline || description }}</p>
-          </div>
+        <div class="card bg-base-100 shadow">
+          <div class="card-body flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+            <div class="flex-1">
+              <h2 class="card-title truncate">{{ displayName }}</h2>
+              <p class="text-gray-600 text-sm truncate">{{ tagline || description }}</p>
+            </div>
 
-          <div class="flex flex-col items-end gap-6">
-            <div class="gap-2 text-right">
-              <span class="text-indigo-700 font-mono text-xs truncate hover:underline">
+            <div class="flex flex-col items-end gap-2">
+              <span class="text-primary font-mono text-xs truncate">
                 /{{ slug }}
               </span>
-            </div>
-            <div class="w-36 h-36 flex-shrink-0">
-              <qrcode-vue :value="`${baseUrl}/p/${slug}`" :size="150" />
+              <div class="w-36 h-36">
+                <qrcode-vue :value="`${baseUrl}/p/${slug}`" :size="150" />
+              </div>
             </div>
           </div>
         </div>
@@ -158,24 +167,26 @@
       <div class="flex gap-4 justify-end mt-6">
         <router-link
           to="/profiles"
-          class="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-100 transition"
+          class="btn btn-ghost"
         >
           Cancelar
         </router-link>
         <button
           type="submit"
+          class="btn btn-primary"
           :disabled="loading"
-          :class="['bg-indigo-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-indigo-700 transition',
-                  loading ? 'opacity-70 cursor-not-allowed' : '']"
         >
-          <span v-if="loading">Guardando...</span>
-          <span v-else>Guardar Perfil</span>
+          <span v-if="loading" class="loading loading-spinner"></span>
+          {{ loading ? 'Guardando...' : 'Guardar Perfil' }}
         </button>
       </div>
 
-      <p v-if="error" class="mt-4 text-center text-red-600 font-semibold">
-        {{ error }}
-      </p>
+      <div v-if="error" class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
     </form>
   </div>
 </template>
@@ -217,8 +228,22 @@ const getLinkTypeLabel = (type) => {
   return linkType.label
 }
 
+const otherLinkTypes = computed(() => linkTypesStore.otherLinkTypes)
+const shouldShowTitleInput = (type) => linkTypesStore.shouldShowTitleInput(type)
+const getLinkPlaceholder = (type) => linkTypesStore.getLinkPlaceholder(type)
+
+const formatSocialUrl = (link) => {
+  link.url = linkTypesStore.formatSocialUrl(link)
+}
+
+const addSelectedLink = () => {
+  if (selectedLinkType.value) {
+    addLink(selectedLinkType.value)
+    selectedLinkType.value = ''
+  }
+}
+
 const handleSave = async () => {
-  // Formatear URLs antes de guardar
   links.value.forEach(link => {
     if (link.url) {
       link.url = linkTypesStore.formatSocialUrl(link)

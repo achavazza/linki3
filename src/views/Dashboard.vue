@@ -1,46 +1,89 @@
 <template>
-  <div>
-    <h2>Mis Perfiles</h2>
+  <div class="container mx-auto p-6">
+    <h2 class="text-2xl font-bold mb-6">Mis Perfiles</h2>
 
-    <ul>
-      <li v-for="profile in userStore.profiles" :key="profile.id" class="mb-2">
-        <strong>{{ profile.display_name }}</strong> —
-        <em>{{ profile.slug }}</em>
-        <button @click="selectProfile(profile)" class="ml-2 px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-          Editar
-        </button>
-      </li>
-    </ul>
-
-    <h3 class="mt-6">Crear nuevo perfil</h3>
-    <form @submit.prevent="createNewProfile" class="space-y-3 max-w-md">
-      <input
-        v-model="newProfile.display_name"
-        placeholder="Nombre público"
-        class="w-full border px-3 py-2 rounded"
-      />
-      <input
-        v-model="newProfile.slug"
-        placeholder="URL (slug)"
-        class="w-full border px-3 py-2 rounded"
-      />
-      <textarea
-        v-model="newProfile.description"
-        placeholder="Descripción"
-        class="w-full border px-3 py-2 rounded"
-      />
-      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        Crear
-      </button>
-    </form>
-
-    <div v-if="activeProfile" class="mt-8">
-      <h3>Editando: {{ activeProfile.display_name }}</h3>
-      <!-- Aquí podrías poner un componente editable de links o detalles del perfil -->
+    <div v-if="loading" class="flex justify-center">
+      <span class="loading loading-spinner loading-lg"></span>
     </div>
 
-    <div v-if="loading" class="mt-4">Cargando...</div>
-    <div v-if="error" class="mt-4 text-red-600">{{ error }}</div>
+    <div v-else-if="error" class="alert alert-error mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+
+    <div v-else>
+      <ul class="space-y-4 mb-8">
+        <li v-for="profile in userStore.profiles" :key="profile.id" class="card bg-base-100 shadow">
+          <div class="card-body">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="card-title">{{ profile.display_name }}</h3>
+                <p class="text-sm text-gray-600">{{ profile.slug }}</p>
+              </div>
+              <button 
+                @click="selectProfile(profile)" 
+                class="btn btn-primary btn-sm"
+              >
+                Editar
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h3 class="card-title mb-4">Crear nuevo perfil</h3>
+          <form @submit.prevent="createNewProfile" class="space-y-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Nombre público</span>
+              </label>
+              <input
+                v-model="newProfile.display_name"
+                placeholder="Nombre público"
+                class="input input-bordered"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">URL (slug)</span>
+              </label>
+              <input
+                v-model="newProfile.slug"
+                placeholder="URL (slug)"
+                class="input input-bordered"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Descripción</span>
+              </label>
+              <textarea
+                v-model="newProfile.description"
+                placeholder="Descripción"
+                class="textarea textarea-bordered"
+              ></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+              Crear
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div v-if="activeProfile" class="card bg-base-100 shadow mt-6">
+        <div class="card-body">
+          <h3 class="card-title">Editando: {{ activeProfile.display_name }}</h3>
+          <!-- Aquí podrías poner un componente editable de links o detalles del perfil -->
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -105,7 +148,6 @@ async function createNewProfile() {
     newProfile.display_name = ''
     newProfile.slug = ''
     newProfile.description = ''
-    // Actualizar lista
     await userStore.fetchProfiles()
   }
 }
