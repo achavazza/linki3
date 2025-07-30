@@ -15,7 +15,7 @@ It allows users to create and share personalized profile pages with links and ta
   - Public slug-based URL (e.g. `/p/username`)
   - QR code generation for sharing
 - Responsive layout with mobile-friendly navigation
-- Built using **Vue 3**, **Pinia**, **Vue Router**, and **Tailwind CSS**
+- Built using **Vue 3**, **Pinia**, **Vue Router**, **DaisyUI**, and **Tailwind CSS**
 
 ---
 
