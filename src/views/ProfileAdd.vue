@@ -186,12 +186,14 @@ import { useProfiles } from '@/composables/useProfiles'
 import { useQr } from '@/composables/useQr'
 import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useLinkTypesStore } from '@/stores/linkTypes'
 
 const router = useRouter()
 const toast = useToast()
 const baseUrl = window.location.origin
 const selectedLinkType = ref('')
 
+const linkTypesStore = useLinkTypesStore()
 
 const {
   displayName,
@@ -203,7 +205,6 @@ const {
   errorField,
   slug,
   publicUrl,
-  linkTypes,
   addLink,
   removeLink,
   saveProfile
@@ -211,96 +212,19 @@ const {
 
 const { QrcodeVue } = useQr()
 
-const updateLinkType = (index) => {
-  const link = links.value[index]
-  const type = linkTypes.value.find(t => t.value === link.type) || { label: 'Personalizado', needsName: true }
-  
-  link.title = type.label
-  link.needsName = type.needsName || false
-  link.url = ''
-  link.error = false
-}
-
-
-// Función para mostrar labels (igual que en ProfileEdit)
 const getLinkTypeLabel = (type) => {
-  const predefinedType = allLinkTypes.find(t => t.value === type)
-  if (predefinedType) return predefinedType.label
-  
-  if (linkTypes.value) {
-    const storeType = linkTypes.value.find(t => t.value === type)
-    if (storeType) return storeType.label
-  }
-  
-  return type || 'Link'
-}
-
-// Función para formatear URLs sociales (igual que en ProfileEdit)
-const formatSocialUrl = (link) => {
-  link.error = false
-  const linkType = allLinkTypes.find(t => t.value === link.type)
-  
-  if (!linkType?.baseUrl || link.url.startsWith(linkType.baseUrl)) {
-    return
-  }
-
-  if (linkType.baseUrl && !link.url.startsWith('http') && 
-      !link.url.startsWith('mailto:') && !link.url.startsWith('tel:')) {
-    const cleanValue = link.url.replace(/^@/, '').replace(/\s+/g, '')
-    if (cleanValue) {
-      link.url = linkType.baseUrl + cleanValue
-    }
-  }
-}
-// Definición completa de tipos de links (igual que en ProfileEdit)
-const allLinkTypes = [
-  { value: 'website', label: 'Sitio Web', baseUrl: '' },
-  { value: 'facebook', label: 'Facebook', baseUrl: 'https://facebook.com/' },
-  { value: 'instagram', label: 'Instagram', baseUrl: 'https://instagram.com/' },
-  { value: 'twitter', label: 'Twitter', baseUrl: 'https://twitter.com/' },
-  { value: 'linkedin', label: 'LinkedIn', baseUrl: 'https://linkedin.com/in/' },
-  { value: 'youtube', label: 'YouTube', baseUrl: 'https://youtube.com/c/' },
-  { value: 'whatsapp', label: 'WhatsApp', baseUrl: 'https://wa.me/' },
-  { value: 'email', label: 'Email', baseUrl: 'mailto:' },
-  { value: 'phone', label: 'Teléfono', baseUrl: 'tel:' },
-  { value: 'custom', label: 'Personalizado', baseUrl: '' }
-]
-
-// Tipos principales para botones
-const mainLinkTypes = ['website', 'instagram', 'facebook', 'whatsapp', 'email']
-const otherLinkTypes = computed(() => 
-  allLinkTypes.filter(type => !mainLinkTypes.includes(type.value))
-)
-
-
-const getLinkPlaceholder = (type) => {
-  const placeholders = {
-    website: 'https://tusitio.com',
-    facebook: 'facebook.com/tuUsuario',
-    instagram: 'instagram.com/tuUsuario',
-    twitter: 'twitter.com/tuUsuario',
-    linkedin: 'linkedin.com/in/tuPerfil',
-    youtube: 'youtube.com/c/tuCanal',
-    whatsapp: 'número con código de país',
-    email: 'tu@email.com',
-    phone: '+541112345678',
-    custom: 'https://ejemplo.com'
-  }
-  return placeholders[type] || 'Ingresa la URL'
-}
-
-const shouldShowTitleInput = (type) => {
-  return ['website', 'custom'].includes(type)
-}
-
-const addSelectedLink = () => {
-  if (selectedLinkType.value) {
-    addLink(selectedLinkType.value)
-    selectedLinkType.value = ''
-  }
+  const linkType = linkTypesStore.getLinkType(type)
+  return linkType.label
 }
 
 const handleSave = async () => {
+  // Formatear URLs antes de guardar
+  links.value.forEach(link => {
+    if (link.url) {
+      link.url = linkTypesStore.formatSocialUrl(link)
+    }
+  })
+  
   const success = await saveProfile()
   if (success) {
     toast.success('Perfil guardado correctamente')

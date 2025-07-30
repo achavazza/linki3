@@ -1,25 +1,13 @@
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/users'
+import { useLinkTypesStore } from '@/stores/linkTypes'
 import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { v4 as uuidv4 } from 'uuid'
 
-// Tipos de links predefinidos
-const LINK_TYPES = {
-  CUSTOM: { value: 'custom', label: 'Personalizado', needsName: true },
-  WEBSITE: { value: 'website', label: 'Sitio Web', needsName: true },
-  FACEBOOK: { value: 'facebook', label: 'Facebook', pattern: 'facebook.com/username' },
-  INSTAGRAM: { value: 'instagram', label: 'Instagram', pattern: 'instagram.com/username' },
-  TWITTER: { value: 'twitter', label: 'Twitter', pattern: 'twitter.com/username' },
-  LINKEDIN: { value: 'linkedin', label: 'LinkedIn', pattern: 'linkedin.com/in/username' },
-  YOUTUBE: { value: 'youtube', label: 'YouTube', pattern: 'youtube.com/c/username' },
-  WHATSAPP: { value: 'whatsapp', label: 'WhatsApp', pattern: 'wa.me/number' },
-  EMAIL: { value: 'email', label: 'Email', pattern: 'tu@email.com' },
-  PHONE: { value: 'phone', label: 'Teléfono', pattern: '+123456789' }
-}
-
 export const useProfiles = (profileId = null, slug = null) => {
   const userStore = useUserStore()
+  const linkTypesStore = useLinkTypesStore()
   
   const state = {
     displayName: ref(''),
@@ -29,20 +17,19 @@ export const useProfiles = (profileId = null, slug = null) => {
     loading: ref(false),
     error: ref(''),
     errorField: ref(''),
-    profileSlug: ref(''),
-    linkTypes: ref(Object.values(LINK_TYPES))
+    profileSlug: ref('')
   }
 
   const generatedSlug = computed(() => helpers.generateSlug(state.displayName.value))
   const publicUrl = computed(() => `${window.location.origin}/p/${state.profileSlug.value}`)
 
-  const addLink = (type = LINK_TYPES.CUSTOM.value) => {
-    const linkType = Object.values(LINK_TYPES).find(t => t.value === type) || LINK_TYPES.CUSTOM
+  const addLink = (type = 'custom') => {
+    const linkType = linkTypesStore.getLinkType(type)
     
     state.links.value.push({ 
       id: uuidv4(),
       type: linkType.value,
-      title: linkType.label,
+      title: linkType.needsName ? '' : linkType.label,
       url: '',
       position: state.links.value.length,
       profile_id: profileId || null,
@@ -50,10 +37,9 @@ export const useProfiles = (profileId = null, slug = null) => {
     })
   }
 
-  // Modificamos validateLinks para manejar los nuevos tipos
   const validateLinks = (links) => {
     const invalidLinks = links.filter(link => {
-      const linkType = Object.values(LINK_TYPES).find(t => t.value === link.type) || LINK_TYPES.CUSTOM
+      const linkType = linkTypesStore.getLinkType(link.type)
       
       // Validar título si es necesario
       if (linkType.needsName && !link.title?.trim()) {
@@ -118,7 +104,14 @@ export const useProfiles = (profileId = null, slug = null) => {
       )
       if (linksError) throw linksError
 
-      state.links.value = linksData || []
+      // Asegurar que los links tengan el type correcto
+      state.links.value = (linksData || []).map(link => {
+        const linkType = linkTypesStore.getLinkType(link.type)
+        return {
+          ...link,
+          needsName: linkType.needsName || false
+        }
+      })
     } catch (err) {
       state.error.value = helpers.extractErrorMessage(err)
     } finally {
@@ -126,13 +119,12 @@ export const useProfiles = (profileId = null, slug = null) => {
     }
   }
 
-  
-
   const prepareLinks = () => {
     return state.links.value
       .filter(link => !link._deleted)
       .map((link, i) => ({
         id: link.id || undefined,
+        type: link.type,
         title: link.title.trim(),
         url: helpers.formatUrl(link.url.trim()),
         position: i,

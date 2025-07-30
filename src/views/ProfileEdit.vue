@@ -238,6 +238,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useUserStore } from '@/stores/users'
+import { useLinkTypesStore } from '@/stores/linkTypes'
 
 const route = useRoute()
 const router = useRouter()
@@ -249,25 +250,12 @@ const profileToDelete = ref(null)
 const userStore = useUserStore()
 const selectedLinkType = ref('')
 
-// Definición completa de tipos de links
-const allLinkTypes = [
-  { value: 'website', label: 'Sitio Web', baseUrl: '' },
-  { value: 'facebook', label: 'Facebook', baseUrl: 'https://facebook.com/' },
-  { value: 'instagram', label: 'Instagram', baseUrl: 'https://instagram.com/' },
-  { value: 'twitter', label: 'Twitter', baseUrl: 'https://twitter.com/' },
-  { value: 'linkedin', label: 'LinkedIn', baseUrl: 'https://linkedin.com/in/' },
-  { value: 'youtube', label: 'YouTube', baseUrl: 'https://youtube.com/c/' },
-  { value: 'whatsapp', label: 'WhatsApp', baseUrl: 'https://wa.me/' },
-  { value: 'email', label: 'Email', baseUrl: 'mailto:' },
-  { value: 'phone', label: 'Teléfono', baseUrl: 'tel:' },
-  { value: 'custom', label: 'Personalizado', baseUrl: '' }
-]
+const linkTypesStore = useLinkTypesStore()
 
-// Tipos principales para botones
-const mainLinkTypes = ['website', 'instagram', 'facebook', 'whatsapp', 'email']
-const otherLinkTypes = computed(() => 
-  allLinkTypes.filter(type => !mainLinkTypes.includes(type.value))
-)
+// Exponer funciones de la store para usar en el template
+const shouldShowTitleInput = linkTypesStore.shouldShowTitleInput
+const getLinkPlaceholder = linkTypesStore.getLinkPlaceholder
+const otherLinkTypes = computed(() => linkTypesStore.otherLinkTypes)
 
 const {
   displayName,
@@ -279,100 +267,50 @@ const {
   errorField,
   profileSlug,
   publicUrl,
-  linkTypes,
   addLink,
   removeLink,
   saveProfile,
-  loadProfile: originalLoadProfile // Renombramos la importación
+  loadProfile: originalLoadProfile
 } = useProfiles(profileId)
 
 const { downloadQr, downloadQrSvg, QrcodeVue } = useQr()
 
-// Función para asegurar que los links cargados tengan el type correcto
-const ensureLinkTypes = (loadedLinks) => {
-  return loadedLinks.map(link => {
-    // Si el link ya tiene type, dejarlo como está
-    if (link.type) return link
-    
-    // Si no tiene type pero tiene title, intentar determinar el type
-    if (link.title) {
-      const matchedType = allLinkTypes.find(t => 
-        link.title.toLowerCase().includes(t.label.toLowerCase())
-      )
-      if (matchedType) {
-        return { ...link, type: matchedType.value }
-      }
-    }
-    
-    // Default para links antiguos sin type
-    return { ...link, type: 'custom' }
-  })
-}
-
-// Función corregida para mostrar labels
 const getLinkTypeLabel = (type) => {
-  // Primero buscar en los tipos predefinidos
-  const predefinedType = allLinkTypes.find(t => t.value === type)
-  if (predefinedType) return predefinedType.label
-  
-  // Si no existe, verificar si es un tipo guardado en la store
-  if (linkTypes.value) {
-    const storeType = linkTypes.value.find(t => t.value === type)
-    if (storeType) return storeType.label
-  }
-  
-  // Si todo falla, devolver el type como último recurso
-  return type || 'Link'
+  return linkTypesStore.getLinkType(type).label
 }
-
-// Función para cargar el perfil con el procesamiento de links
-const loadProfileWithTypes = async () => {
-  await originalLoadProfile()
-  if (links.value) {
-    links.value = ensureLinkTypes(links.value)
-  }
-}
-
-// Sobrescribir la función loadProfile en el template
-const loadProfile = loadProfileWithTypes
 
 const formatSocialUrl = (link) => {
   link.error = false
-  const linkType = allLinkTypes.find(t => t.value === link.type)
-  
-  if (!linkType?.baseUrl || link.url.startsWith(linkType.baseUrl)) {
-    return
+  const formattedUrl = linkTypesStore.formatSocialUrl(link)
+  if (formattedUrl !== link.url) {
+    link.url = formattedUrl
   }
+}
 
-  // Formatear URLs de redes sociales
-  if (linkType.baseUrl && !link.url.startsWith('http') && !link.url.startsWith('mailto:') && !link.url.startsWith('tel:')) {
-    // Eliminar @ si existe y cualquier caracter no válido
-    const cleanValue = link.url.replace(/^@/, '').replace(/\s+/g, '')
-    if (cleanValue) {
-      link.url = linkType.baseUrl + cleanValue
+const loadProfileWithTypes = async () => {
+  try {
+    await originalLoadProfile()
+    // No necesitamos ensureLinkTypes si la API ya devuelve los tipos correctos
+  } catch (err) {
+    console.error('Error loading profile:', err)
+    toast.error('Error al cargar el perfil')
+  }
+}
+
+const ensureLinkTypes = (loadedLinks) => {
+  return loadedLinks.map(link => {
+    // Si ya tiene type, solo asegurar que tenga needsName
+    const linkType = linkTypesStore.getLinkType(link.type || 'custom')
+    return {
+      ...link,
+      type: link.type || 'custom',
+      needsName: linkType.needsName || false,
+      error: false
     }
-  }
+  })
 }
 
-const getLinkPlaceholder = (type) => {
-  const placeholders = {
-    website: 'https://tusitio.com',
-    facebook: 'facebook.com/tuUsuario',
-    instagram: 'instagram.com/tuUsuario',
-    twitter: 'twitter.com/tuUsuario',
-    linkedin: 'linkedin.com/in/tuPerfil',
-    youtube: 'youtube.com/c/tuCanal',
-    whatsapp: 'número con código de país',
-    email: 'tu@email.com',
-    phone: '+541112345678',
-    custom: 'https://ejemplo.com'
-  }
-  return placeholders[type] || 'Ingresa la URL'
-}
-
-const shouldShowTitleInput = (type) => {
-  return ['website', 'custom'].includes(type)
-}
+const loadProfile = loadProfileWithTypes
 
 const addSelectedLink = () => {
   if (selectedLinkType.value) {
@@ -382,14 +320,23 @@ const addSelectedLink = () => {
 }
 
 const handleSave = async () => {
-  const success = await saveProfile()
-  if (success) {
-    toast.success('Perfil guardado correctamente')
-    setTimeout(() => {
-      router.push('/profiles')
-    }, 1000)
-  } else {
-    toast.error('Error al guardar el perfil')
+  try {
+    // Formatear URLs antes de guardar
+    links.value.forEach(link => {
+      if (link.url) {
+        link.url = linkTypesStore.formatSocialUrl(link)
+      }
+    })
+    
+    const success = await saveProfile()
+    if (success) {
+      toast.success('Perfil guardado correctamente')
+      setTimeout(() => {
+        router.push('/profiles')
+      }, 1000)
+    }
+  } catch (err) {
+    toast.error(err.message || 'Error al guardar el perfil')
   }
 }
 
@@ -403,17 +350,17 @@ const deleteProfile = async () => {
   
   if (!profileToDelete.value) return
   
-  const success = await userStore.deleteProfile(profileToDelete.value)
-  
-  if (success) {
-    toast.error('Perfil eliminado correctamente')
-    router.push('/profiles')
-  } else {
-    toast.error(userStore.error || 'Error al eliminar el perfil')
+  try {
+    const success = await userStore.deleteProfile(profileToDelete.value)
+    if (success) {
+      toast.success('Perfil eliminado correctamente')
+      router.push('/profiles')
+    }
+  } catch (err) {
+    toast.error(err.message || 'Error al eliminar el perfil')
   }
 }
 
-// Cargar el perfil al montar el componente
 onMounted(() => {
   loadProfile()
 })
