@@ -189,15 +189,15 @@ export const useUserStore = defineStore('user', {
         if (!this.user) return
         
         this.setLoading(true)
-        const { data, error } = await api.getAll(
-          'profiles',
-          { user_id: this.user.id },
-          'created_at'
-        )
+        const { data, error } = await api.getAll( 'profiles', { user_id: this.user.id }, 'created_at' )
 
         if (error) throw error
 
-        this.profiles = data || []
+        // Asegurarse de que cada perfil tenga el campo active (por defecto true si no existe)
+        this.profiles = (data || []).map(profile => ({
+          ...profile,
+          active: profile.active !== false // true por defecto si no está definido
+        }))
       } catch (error) {
         this.setError(error)
         this.profiles = []
@@ -213,7 +213,8 @@ export const useUserStore = defineStore('user', {
 
         const { data, error } = await api.create('profiles', {
           ...profileData,
-          user_id: this.user.id
+          user_id: this.user.id,
+          active: true // Asegurar que nuevos perfiles estén activos por defecto
         })
 
         if (error) throw error
@@ -238,13 +239,13 @@ export const useUserStore = defineStore('user', {
 
         const index = this.profiles.findIndex(p => p.id === profileId)
         if (index !== -1) {
-          this.profiles[index] = data
+          this.profiles[index] = { ...this.profiles[index], ...updates }
         }
 
-        return { data }
+        return { data, error: null }
       } catch (error) {
         this.setError(error)
-        return { error }
+        return { data: null, error }
       } finally {
         this.setLoading(false)
       }

@@ -33,6 +33,15 @@
           <h2 class="text-lg font-semibold truncate">{{ profile.display_name }}</h2>
           <p class="text-gray-600 text-sm mb-2 truncate">{{ profile.tagline || profile.description }}</p>
           <div class="flex gap-2">
+            <label class="inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                v-model="profile.active" 
+                @change="toggleProfileActive(profile)" 
+                class="sr-only peer"
+              >
+              <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
             <router-link
               :to="`/profiles/${profile.id}/edit`"
               class="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 text-center"
@@ -72,14 +81,36 @@
 <script setup>
 import { useUserStore } from '@/stores/users'
 import { computed, onMounted, ref } from 'vue'
+import { useToast } from 'vue-toastification'
 import QrcodeVue from 'qrcode.vue'
 
 const userStore = useUserStore()
 const baseUrl = window.location.origin
 const loading = ref(true)
 const error = ref(null)
+const toast = useToast()
 
 const profiles = computed(() => userStore.profiles)
+
+const toggleProfileActive = async (profile) => {
+  try {
+    loading.value = true
+    const { error: updateError } = await userStore.updateProfile(profile.id, {
+      active: profile.active
+    })
+    
+    if (updateError) throw updateError
+    
+    toast.info(`Perfil ${profile.active ? 'activado' : 'desactivado'}`)
+  } catch (err) {
+    toast.error('Error al actualizar el perfil')
+    console.error(err)
+    // Revertir el cambio si falla
+    profile.active = !profile.active
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(async () => {
   try {

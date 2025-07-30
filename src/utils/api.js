@@ -249,32 +249,34 @@ async upsert(table, records, onConflict = 'id') {
   async updateProfileLinks(profileId, links) {
     try {
       // 1. Primero eliminar los links existentes
-      const { error: deleteError } = await this.executeQuery(
-        supabase.from('links')
-          .delete()
-          .eq('profile_id', profileId)
-      );
+      const { error: deleteError } = await supabase
+        .from('links')
+        .delete()
+        .eq('profile_id', profileId);
       
       if (deleteError) throw deleteError;
       
-      // 2. Validar que hay links para insertar
+      // 2. Si no hay links para insertar, retornar éxito
       if (!links || links.length === 0) {
         return { data: [], error: null };
       }
       
-      // 3. Insertar los nuevos links
-      const { data, error } = await this.executeQuery(
-        supabase.from('links')
-          .insert(links)
-          .select()
-      );
+      // 3. Preparar los datos para insertar (asegurando el campo type)
+      const linksToInsert = links.map(link => ({
+        title: link.title,
+        url: link.url,
+        position: link.position,
+        profile_id: profileId,
+        type: link.type || 'custom' // Valor por defecto si no viene type
+      }));
+      
+      // 4. Insertar los nuevos links
+      const { data, error } = await supabase
+        .from('links')
+        .insert(linksToInsert)
+        .select();
       
       if (error) throw error;
-      
-      // Verificar que se crearon los links
-      if (!data || data.length === 0) {
-        throw new Error('No se crearon los links');
-      }
       
       return { data, error: null };
     } catch (error) {

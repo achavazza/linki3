@@ -120,17 +120,17 @@ export const useProfiles = (profileId = null, slug = null) => {
   }
 
   const prepareLinks = () => {
-    return state.links.value
-      .filter(link => !link._deleted)
-      .map((link, i) => ({
-        id: link.id || undefined,
-        type: link.type,
-        title: link.title.trim(),
-        url: helpers.formatUrl(link.url.trim()),
-        position: i,
-        profile_id: profileId
-      }))
-  }
+      return state.links.value
+        .filter(link => !link._deleted)
+        .map((link, i) => ({
+          id: link.id || undefined,
+          title: link.title?.trim() || '',
+          url: helpers.formatUrl(link.url?.trim()) || '',
+          position: i,
+          profile_id: profileId,
+          type: link.type || 'custom' // Asegurar que siempre tenga un valor
+        }))
+    }
 
   const saveProfile = async () => {
     try {
