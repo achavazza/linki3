@@ -4,6 +4,20 @@ import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { v4 as uuidv4 } from 'uuid'
 
+// Tipos de links predefinidos
+const LINK_TYPES = {
+  CUSTOM: { value: 'custom', label: 'Personalizado', needsName: true },
+  WEBSITE: { value: 'website', label: 'Sitio Web', needsName: true },
+  FACEBOOK: { value: 'facebook', label: 'Facebook', pattern: 'facebook.com/username' },
+  INSTAGRAM: { value: 'instagram', label: 'Instagram', pattern: 'instagram.com/username' },
+  TWITTER: { value: 'twitter', label: 'Twitter', pattern: 'twitter.com/username' },
+  LINKEDIN: { value: 'linkedin', label: 'LinkedIn', pattern: 'linkedin.com/in/username' },
+  YOUTUBE: { value: 'youtube', label: 'YouTube', pattern: 'youtube.com/c/username' },
+  WHATSAPP: { value: 'whatsapp', label: 'WhatsApp', pattern: 'wa.me/number' },
+  EMAIL: { value: 'email', label: 'Email', pattern: 'tu@email.com' },
+  PHONE: { value: 'phone', label: 'Teléfono', pattern: '+123456789' }
+}
+
 export const useProfiles = (profileId = null, slug = null) => {
   const userStore = useUserStore()
   
@@ -15,20 +29,50 @@ export const useProfiles = (profileId = null, slug = null) => {
     loading: ref(false),
     error: ref(''),
     errorField: ref(''),
-    profileSlug: ref('')
+    profileSlug: ref(''),
+    linkTypes: ref(Object.values(LINK_TYPES))
   }
 
   const generatedSlug = computed(() => helpers.generateSlug(state.displayName.value))
   const publicUrl = computed(() => `${window.location.origin}/p/${state.profileSlug.value}`)
 
-  const addLink = () => {
+  const addLink = (type = LINK_TYPES.CUSTOM.value) => {
+    const linkType = Object.values(LINK_TYPES).find(t => t.value === type) || LINK_TYPES.CUSTOM
+    
     state.links.value.push({ 
       id: uuidv4(),
-      title: '', 
+      type: linkType.value,
+      title: linkType.label,
       url: '',
       position: state.links.value.length,
-      profile_id: profileId || null
+      profile_id: profileId || null,
+      needsName: linkType.needsName || false
     })
+  }
+
+  // Modificamos validateLinks para manejar los nuevos tipos
+  const validateLinks = (links) => {
+    const invalidLinks = links.filter(link => {
+      const linkType = Object.values(LINK_TYPES).find(t => t.value === link.type) || LINK_TYPES.CUSTOM
+      
+      // Validar título si es necesario
+      if (linkType.needsName && !link.title?.trim()) {
+        return true
+      }
+      
+      // Validar URL
+      const formattedUrl = helpers.formatUrl(link.url?.trim())
+      if (!formattedUrl) return true
+      
+      // Asignar el URL formateado
+      link.url = formattedUrl
+      return false
+    })
+    
+    if (invalidLinks.length > 0) {
+      invalidLinks.forEach(link => link.error = true)
+      throw new Error(`Links inválidos: ${invalidLinks.map(l => l.title || 'sin título').join(', ')}`)
+    }
   }
 
   const removeLink = (index) => {
@@ -82,24 +126,7 @@ export const useProfiles = (profileId = null, slug = null) => {
     }
   }
 
-  const validateLinks = (links) => {
-    const invalidLinks = links.filter(link => {
-      const hasTitle = link.title?.trim().length > 0
-      const formattedUrl = helpers.formatUrl(link.url?.trim())
-      const hasValidUrl = formattedUrl.length > 0
-      
-      if (hasValidUrl) {
-        link.url = formattedUrl
-      }
-      
-      return !hasTitle || !hasValidUrl
-    })
-    
-    if (invalidLinks.length > 0) {
-      invalidLinks.forEach(link => link.error = true)
-      throw new Error(`Links inválidos: ${invalidLinks.map(l => l.title || 'sin título').join(', ')}`)
-    }
-  }
+  
 
   const prepareLinks = () => {
     return state.links.value

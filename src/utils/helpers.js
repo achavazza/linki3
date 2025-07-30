@@ -20,6 +20,7 @@ export const helpers = {
       .replace(/-+$/, '')
   },
 
+  
   /**
    * Formatea una URL asegurando que tenga protocolo http/https
    * @param {string} url - URL a formatear
@@ -28,25 +29,39 @@ export const helpers = {
   formatUrl(url) {
     if (!url) return '';
     
-    try {
-      // Eliminar espacios y caracteres inválidos
-      const trimmed = url.trim().replace(/\s+/g, '');
-      
-      // Verificar si ya tiene protocolo
-      if (/^(https?|ftp):\/\//i.test(trimmed)) {
-        return trimmed;
-      }
-      
-      // Verificar si parece una URL sin protocolo
-      if (trimmed.includes('.') && !trimmed.startsWith('.')) {
-        return `https://${trimmed}`;
-      }
-      
-      return '';
-    } catch (error) {
-      console.error('Error formateando URL:', url, error);
-      return '';
+    // Eliminar espacios
+    url = url.trim();
+    
+    // Si ya tiene protocolo, devolver tal cual
+    if (/^https?:\/\//i.test(url)) {
+      return url;
     }
+    
+    // Si es un email
+    if (url.includes('@') && !url.startsWith('mailto:')) {
+      return `mailto:${url}`;
+    }
+    
+    // Si es un teléfono
+    if (/^[\d\+][\d\s\-\(\)]+$/.test(url) && !url.startsWith('tel:')) {
+      return `tel:${url.replace(/[^\d\+]/g, '')}`;
+    }
+    
+    // Si es WhatsApp
+    if (/^https?:\/\/wa\.me\/.+$/i.test(url) || 
+        /^https?:\/\/api\.whatsapp\.com\/send\?.+$/i.test(url)) {
+      return url;
+    }
+    if (/^[\d\s\-\(\)]+$/.test(url) && !url.startsWith('https://wa.me/')) {
+      return `https://wa.me/${url.replace(/[^\d]/g, '')}`;
+    }
+    
+    // Para otros casos, asumir que es una URL web
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`;
+    }
+    
+    return url;
   },
 
   /**
