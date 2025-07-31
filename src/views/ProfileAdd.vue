@@ -234,8 +234,13 @@ const shouldShowTitleInput = (type) => linkTypesStore.shouldShowTitleInput(type)
 const getLinkPlaceholder = (type) => linkTypesStore.getLinkPlaceholder(type)
 
 const formatSocialUrl = (link) => {
-  link.url = linkTypesStore.formatSocialUrl(link)
+  link.error = false
+  const formattedUrl = linkTypesStore.formatSocialUrl(link)
+  if (formattedUrl !== link.url) {
+    link.url = formattedUrl
+  }
 }
+
 
 const addSelectedLink = () => {
   if (selectedLinkType.value) {

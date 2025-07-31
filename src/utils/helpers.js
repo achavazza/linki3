@@ -26,42 +26,59 @@ export const helpers = {
    * @param {string} url - URL a formatear
    * @returns {string} - URL formateada
    */
-  formatUrl(url) {
-    if (!url) return '';
-    
-    // Eliminar espacios
-    url = url.trim();
-    
-    // Si ya tiene protocolo, devolver tal cual
-    if (/^https?:\/\//i.test(url)) {
-      return url;
+  formatUrl(url, type = '') {
+  if (!url) return '';
+
+  url = url.trim();
+
+    switch (type) {
+      case 'email':
+        // Asegura el esquema mailto:
+        url = url.replace(/^mailto:/, '');
+        return `mailto:${url}`;
+
+      case 'whatsapp':
+        // Extrae solo los números
+        const whatsappNumber = url.replace(/[^\d]/g, '');
+        return `https://wa.me/${whatsappNumber}`;
+
+      case 'phone':
+      case 'tel':
+        const phoneNumber = url.replace(/[^\d\+]/g, '');
+        return `tel:${phoneNumber}`;
+
+      case 'website':
+        // Si ya tiene http(s), no tocar
+        if (/^https?:\/\//i.test(url)) return url;
+        return `https://${url}`;
+
+      default:
+        // Manejo general: email, tel, wa, o url por defecto
+        if (url.includes('@')) {
+          return `mailto:${url.replace(/^mailto:/, '')}`;
+        }
+
+        if (/^[\d\+][\d\s\-\(\)]+$/.test(url)) {
+          return `tel:${url.replace(/[^\d\+]/g, '')}`;
+        }
+
+        if (/^https?:\/\/wa\.me\/.+$/i.test(url) ||
+            /^https?:\/\/api\.whatsapp\.com\/send\?.+$/i.test(url)) {
+          return url;
+        }
+
+        if (/^[\d\s\-\(\)]+$/.test(url)) {
+          return `https://wa.me/${url.replace(/[^\d]/g, '')}`;
+        }
+
+        // Si tiene http(s) ya está bien
+        if (/^https?:\/\//i.test(url)) {
+          return url;
+        }
+
+        // Asume que es sitio web
+        return `https://${url}`;
     }
-    
-    // Si es un email
-    if (url.includes('@') && !url.startsWith('mailto:')) {
-      return `mailto:${url}`;
-    }
-    
-    // Si es un teléfono
-    if (/^[\d\+][\d\s\-\(\)]+$/.test(url) && !url.startsWith('tel:')) {
-      return `tel:${url.replace(/[^\d\+]/g, '')}`;
-    }
-    
-    // Si es WhatsApp
-    if (/^https?:\/\/wa\.me\/.+$/i.test(url) || 
-        /^https?:\/\/api\.whatsapp\.com\/send\?.+$/i.test(url)) {
-      return url;
-    }
-    if (/^[\d\s\-\(\)]+$/.test(url) && !url.startsWith('https://wa.me/')) {
-      return `https://wa.me/${url.replace(/[^\d]/g, '')}`;
-    }
-    
-    // Para otros casos, asumir que es una URL web
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return `https://${url}`;
-    }
-    
-    return url;
   },
 
   /**

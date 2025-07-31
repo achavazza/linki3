@@ -15,7 +15,7 @@
           <a
             v-for="link in links"
             :key="link.id"
-            :href="helpers.formatUrl(link.url)"
+            :href="helpers.formatUrl(link.url, link.type)"
             target="_blank"
             rel="noopener noreferrer"
             class="btn btn-primary btn-block"
