@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header class="navbar bg-base-100 shadow-sm">
+    <header class="navbar bg-base-100 shadow-sm relative">
       <div class="container flex mx-auto px-4">
         <div class="flex-1">
           <!-- Logo -->
@@ -14,7 +14,7 @@
             exact-active-class="btn-active" 
             class="btn btn-ghost"
           >
-            Home
+            Inicio
           </RouterLink>
           
 
@@ -32,7 +32,7 @@
               active-class="btn-active" 
               class="btn btn-ghost"
             >
-              Register
+              Registro
             </RouterLink>
           </template>
 
@@ -43,14 +43,14 @@
               active-class="btn-active" 
               class="btn btn-ghost"
             >
-              Profiles
+              Perfiles
             </RouterLink>
             <RouterLink 
               to="/settings" 
               active-class="btn-active" 
               class="btn btn-ghost"
             >
-              Settings
+              Ajustes
             </RouterLink>
             <button 
               @click="handleLogout" 
@@ -100,31 +100,33 @@
       <!-- Menú Mobile -->
       <nav
         v-show="menuOpen"
-        class="md:hidden bg-base-100 shadow-md w-full"
+        class="md:hidden bg-base-100 shadow-md w-full absolute top-full left-0 z-50 flex flex-col"
       >
         <RouterLink
           to="/"
           exact-active-class="bg-primary text-primary-content"
-          class="block px-6 py-3 hover:bg-base-200"
+          class="block px-6 py-3 hover:bg-base-200 w-full"
           @click="closeMenu"
         >
-          Home
+        Inicio
         </RouterLink>
-        <RouterLink
-          to="/about"
-          active-class="bg-primary text-primary-content"
-          class="block px-6 py-3 hover:bg-base-200"
-          @click="closeMenu"
-        >
-          About
-        </RouterLink>
+        <!--
+              <RouterLink
+              to="/about"
+              active-class="bg-primary text-primary-content"
+              class="block px-6 py-3 hover:bg-base-200"
+              @click="closeMenu"
+            >
+            Sobre
+          </RouterLink>
+          -->
 
         <!-- Mostrar si NO está logueado -->
         <template v-if="!user">
           <RouterLink
             to="/login"
             active-class="bg-primary text-primary-content"
-            class="block px-6 py-3 hover:bg-base-200"
+            class="block px-6 py-3 hover:bg-base-200 w-full"
             @click="closeMenu"
           >
             Login
@@ -132,10 +134,10 @@
           <RouterLink
             to="/register"
             active-class="bg-primary text-primary-content"
-            class="block px-6 py-3 hover:bg-base-200"
+            class="block px-6 py-3 hover:bg-base-200 w-full"
             @click="closeMenu"
           >
-            Register
+            Registro
           </RouterLink>
         </template>
 
@@ -144,30 +146,30 @@
           <RouterLink
             to="/profiles"
             active-class="bg-primary text-primary-content"
-            class="block px-6 py-3 hover:bg-base-200"
+            class="block px-6 py-3 hover:bg-base-200 w-full"
             @click="closeMenu"
           >
-            Profiles
+            Perfiles
           </RouterLink>
           <RouterLink
             to="/settings"
             active-class="bg-primary text-primary-content"
-            class="block px-6 py-3 hover:bg-base-200"
+            class="block px-6 py-3 hover:bg-base-200 w-full"
             @click="closeMenu"
           >
-            Settings
+            Ajustes
           </RouterLink>
           <button 
             @click="handleLogout" 
-            class="block w-full text-left px-6 py-3 hover:bg-base-200 text-error"
+            class="block w-full text-left px-6 py-3 hover:bg-base-200 text-error w-full"
           >
             Logout
           </button>
         </template>
       </nav>
     </header>
-    <div class="">
-      <main class="container mx-auto max-w-xl p-6 mt-6 bg-base-100 rounded-3xl border border-base-300 mb-10">
+    <div class="pb-10">
+      <main class="container mx-auto max-w-xl p-6 mt-6 bg-base-100 rounded-3xl border border-base-300">
         <slot />
       </main>
     </div>

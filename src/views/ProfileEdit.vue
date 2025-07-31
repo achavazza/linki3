@@ -48,13 +48,13 @@
             <input
               v-model="link.title"
               placeholder="Título del link"
-              class="input input-bordered flex-[1] max-w-[150px]"
+              class="input input-bordered flex-[1] max-w-[120px]"
               :class="{ 'input-error': link.error }"
               @input="link.error = false"
             />
           </template>
           <template v-else>
-            <div class="content-center input flex-[1] max-w-[150px] bg-base-200">
+            <div class="content-center input flex-[1] max-w-[120px] bg-base-200">
               {{ getLinkTypeLabel(link.type) }}
             </div>
           </template>
