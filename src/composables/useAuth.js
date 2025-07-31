@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { useToast } from 'vue-toastification'
+import { supabase } from '@/supabase'
 
 const toast = useToast()
 
@@ -110,7 +111,14 @@ export const useAuth = () => {
         username: state.username.value
       })
       
-      if (authError) throw authError
+      if (authError) {
+        // Manejar específicamente el error de email no confirmado
+        if (authError.message && authError.message.includes('Email not confirmed')) {
+          state.success.value = 'Registro exitoso. Revisá tu email para confirmar tu cuenta antes de iniciar sesión.'
+          return
+        }
+        throw authError
+      }
       
       if (user) {
         // Usuario confirmado inmediatamente (puede variar según tu configuración)
