@@ -46,8 +46,8 @@ export const useProfiles = (profileId = null, slug = null) => {
         return true
       }
       
-      // Validar URL
-      const formattedUrl = helpers.formatUrl(link.url?.trim())
+      // Validar URL - pasar el tipo para formateo correcto
+      const formattedUrl = helpers.formatUrl(link.url?.trim(), link.type)
       if (!formattedUrl) return true
       
       // Asignar el URL formateado

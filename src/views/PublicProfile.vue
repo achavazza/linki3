@@ -1,34 +1,42 @@
 <template>
-  
-  <div v-if="!profileNotFound||profileActive === true"  class="container mx-auto">
+  <!-- Loading state -->
+  <div v-if="loading" class="hero-content text-center">
+    <div class="max-w-md">
+      <span class="loading loading-spinner loading-lg"></span>
+      <p class="py-6">Cargando perfil...</p>
+    </div>
+  </div>
 
+  <!-- Profile found and active -->
+  <div v-else-if="!profileNotFound && profileActive" class="container mx-auto">
     <div class="items-center text-center">
       <h1 class="text-center heading text-3xl font-extrabold">{{ displayName }}</h1>
       <h2 v-if="tagline" class="text-xl text-gray-600 font-bold">{{ tagline }}</h2>
       <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
     </div>
 
-
-    <div v-if="links.length" class=" bg-base-100 mt-5 pt-5 border-t-2  border-base-200">
-        <div class="space-y-3">
-          <a
-            v-for="link in links"
-            :key="link.id"
-            :href="helpers.formatUrl(link.url, link.type)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn btn-primary btn-block flex items-center gap-2"
-          > 
-            <span
-              v-if="linkTypesStore.getLinkType(link.type)?.icon"
-              class="inline-block"
-              v-html="linkTypesStore.getLinkType(link.type).icon"
-            ></span>
-            <span>{{ link.title || link.url }}</span>
-          </a>
+    <div v-if="links.length" class="bg-base-100 mt-5 pt-5 border-t-2 border-base-200">
+      <div class="space-y-3">
+        <a
+          v-for="link in links"
+          :key="link.id"
+          :href="helpers.formatUrl(link.url, link.type)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary btn-block flex items-center gap-2"
+        > 
+          <span
+            v-if="linkTypesStore.getLinkType(link.type)?.icon"
+            class="inline-block"
+            v-html="linkTypesStore.getLinkType(link.type).icon"
+          ></span>
+          <span>{{ link.title || link.url }}</span>
+        </a>
       </div>
     </div>
   </div>
+
+  <!-- Profile not found or inactive -->
   <div v-else>
     <div class="hero-content text-center">
       <div class="max-w-md">
@@ -55,8 +63,8 @@ const linkTypesStore = useLinkTypesStore()
 
 const route = useRoute()
 const slug = route.params.slug
-const profileNotFound = ref(false)
-const profileActive = ref(false)
+const profileNotFound = ref(null)
+const profileActive = ref(null)
 
 const {
   displayName,
@@ -80,17 +88,21 @@ onMounted(async () => {
     
     if (displayName.value === '' || error.value) {
       profileNotFound.value = true
+      profileActive.value = false
     } else {
       const { data: profileData, error: profileError } = await api.getBySlug('profiles', slug)
       
       if (profileError || !profileData) {
         profileNotFound.value = true
+        profileActive.value = false
       } else {
+        profileNotFound.value = false
         profileActive.value = profileData.active !== false
       }
     }
   } catch (err) {
     profileNotFound.value = true
+    profileActive.value = false
     console.error('Error loading profile:', err)
   } finally {
     loading.value = false
