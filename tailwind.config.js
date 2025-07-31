@@ -3,13 +3,13 @@ module.exports = {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
-  theme: { 
+ /* theme: { 
     extend: {
       fontFamily: {
-        'sans': ['Inter', 'sans-serif'],
+        'sans': ['Outfit', 'sans-serif'],
       },
     } 
-  },
+  },*/
   plugins: [
     //require('@tailwindcss/forms'),
     require('daisyui'),

@@ -22,8 +22,10 @@
     "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
     "@vitejs/plugin-vue": "^6.0.1",
     "autoprefixer": "^10.4.21",
+    "qrcode": "^1.5.4",
     "vite": "^7.0.0",
     "vite-plugin-vue-devtools": "^7.7.7"
   }

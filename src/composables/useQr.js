@@ -1,141 +1,75 @@
 import { nextTick } from 'vue'
-import QrcodeVue from 'qrcode.vue'
 import { helpers } from '@/utils/helpers'
 
 export const useQr = () => {
   /**
-   * Genera y descarga un QR en formato PNG
-   * @param {Ref} canvasRef - Referencia al contenedor del canvas
-   * @param {string} filename - Nombre del archivo (sin extensión)
-   * @param {string} [text] - Texto opcional para el QR (si no se usa el componente)
-   * @param {number} [size=150] - Tamaño del QR
-   * @param {string} [level='M'] - Nivel de corrección de errores (L, M, Q, H)
+   * Descarga un QR como PNG desde un <canvas>
+   * @param {Ref<HTMLCanvasElement>} canvasRef
+   * @param {string} filename - Nombre del archivo sin extensión
    */
-  const downloadQr = async (canvasRef, filename, text = null, size = 150, level = 'M') => {
+  const downloadQr = async (canvasRef, filename) => {
     try {
       await nextTick()
-      
-      let canvas
-      let tempDiv = null
-      
-      if (canvasRef?.value) {
-        canvas = canvasRef.value.querySelector('canvas')
-      }
-      
-      // Si no hay canvasRef pero hay texto, generamos QR dinámicamente
-      if (!canvas && text) {
-        tempDiv = document.createElement('div')
-        tempDiv.style.position = 'absolute'
-        tempDiv.style.left = '-9999px'
-        document.body.appendChild(tempDiv)
-        
-        const QrComponent = {
-          template: '<qrcode-vue :value="text" :size="size" :level="level" render-as="canvas" />',
-          components: { QrcodeVue },
-          props: ['text', 'size', 'level']
-        }
-        
-        const app = createApp(QrComponent, { text, size, level })
-        app.mount(tempDiv)
-        await nextTick()
-        canvas = tempDiv.querySelector('canvas')
-      }
-      
-      if (!canvas) {
-        throw new Error('No se pudo generar el código QR')
+
+      const canvas = canvasRef.value
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        throw new Error('No se encontró un elemento <canvas> válido')
       }
 
       const url = canvas.toDataURL('image/png')
       helpers.downloadFile(url, `${filename}.png`, 'image/png')
-      
     } catch (error) {
-      console.error('Error al descargar QR:', error)
-      throw new Error('No se pudo generar el código QR. Asegúrate de que el perfil tenga un nombre válido.')
-    } finally {
-      if (tempDiv) {
-        document.body.removeChild(tempDiv)
-      }
+      console.error('Error al descargar QR PNG:', error)
+      throw new Error('No se pudo generar el código QR en PNG.')
     }
   }
 
   /**
-   * Genera y descarga un QR en formato SVG
-   * @param {Ref} svgRef - Referencia al contenedor del SVG
-   * @param {string} filename - Nombre del archivo (sin extensión)
-   * @param {string} [text] - Texto opcional para el QR (si no se usa el componente)
-   * @param {number} [size=150] - Tamaño del QR
-   * @param {string} [level='M'] - Nivel de corrección de errores (L, M, Q, H)
+   * Descarga un QR como SVG desde un <svg>
+   * @param {Ref<SVGElement>} svgRef
+   * @param {string} filename - Nombre del archivo sin extensión
    */
-  const downloadQrSvg = async (svgRef, filename, text = null, size = 150, level = 'M') => {
+  const downloadQrSvg = async (svgRef, filename) => {
     try {
       await nextTick()
-      
-      let svg
-      
-      if (svgRef.value) {
-        svg = svgRef.value.querySelector('svg')
+
+      const svg = svgRef.value
+      if (!(svg instanceof SVGElement)) {
+        throw new Error('No se encontró un elemento <svg> válido')
       }
-      
-      // Si no hay svgRef pero hay texto, generamos QR dinámicamente
-      if (!svg && text) {
-        const tempDiv = document.createElement('div')
-        document.body.appendChild(tempDiv)
-        
-        const QrComponent = {
-          template: '<qrcode-vue :value="text" :size="size" :level="level" render-as="svg" />',
-          components: { QrcodeVue },
-          props: ['text', 'size', 'level']
-        }
-        
-        const app = createApp(QrComponent, { text, size, level })
-        app.mount(tempDiv)
-        await nextTick()
-        svg = tempDiv.querySelector('svg')
-      }
-      
-      if (!svg) {
-        throw new Error('No se pudo generar el código QR')
-      }
-      
+
       svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
       const serializer = new XMLSerializer()
       const svgString = serializer.serializeToString(svg)
-      
+
       helpers.downloadFile(svgString, `${filename}.svg`, 'image/svg+xml')
-      
-      if (text) {
-        document.body.removeChild(svg.parentElement)
-      }
     } catch (error) {
       console.error('Error al descargar QR SVG:', error)
-      throw new Error('No se pudo descargar el código QR en formato SVG')
+      throw new Error('No se pudo generar el código QR en SVG.')
     }
   }
 
   /**
-   * Genera un QR como Data URL (para previsualización)
-   * @param {string} text - Texto para codificar
-   * @param {number} [size=150] - Tamaño del QR
-   * @param {string} [level='M'] - Nivel de corrección de errores
-   * @param {string} [format='png'] - Formato de salida (png o svg)
+   * Genera un QR en base64 (Data URL)
+   * @param {string} text
+   * @param {number} [size=150]
+   * @param {string} [level='M']
+   * @param {'png'|'svg'} [format='png']
    * @returns {Promise<string>} - Data URL del QR
    */
   const generateQrDataUrl = async (text, size = 150, level = 'M', format = 'png') => {
     try {
       const tempDiv = document.createElement('div')
       document.body.appendChild(tempDiv)
-      
-      const QrComponent = {
-        template: `<qrcode-vue :value="text" :size="size" :level="level" render-as="${format}" />`,
-        components: { QrcodeVue },
-        props: ['text', 'size', 'level']
-      }
-      
-      const app = createApp(QrComponent, { text, size, level })
-      app.mount(tempDiv)
+
+      const qrComponent = document.createElement('div')
+      qrComponent.innerHTML = `<qrcode-vue value="${text}" size="${size}" level="${level}" render-as="${format}" />`
+      tempDiv.appendChild(qrComponent)
+
       await nextTick()
-      
+
       let dataUrl
+
       if (format === 'png') {
         const canvas = tempDiv.querySelector('canvas')
         if (!canvas) throw new Error('No se pudo generar el QR')
@@ -148,17 +82,16 @@ export const useQr = () => {
         const svgString = serializer.serializeToString(svg)
         dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`
       }
-      
+
       document.body.removeChild(tempDiv)
       return dataUrl
     } catch (error) {
       console.error('Error al generar QR:', error)
-      throw new Error('No se pudo generar el código QR')
+      throw new Error('No se pudo generar el código QR como Data URL.')
     }
   }
 
   return {
-    QrcodeVue,
     downloadQr,
     downloadQrSvg,
     generateQrDataUrl

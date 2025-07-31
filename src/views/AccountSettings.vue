@@ -7,22 +7,21 @@
     </div>
 
     <div v-else-if="user">
-      <div class="card bg-base-100 shadow">
-        <div class="card-body">
-          <div class="form-control">
+
+          <div class="form-control w-full">
             <label class="label">
               <span class="label-text">Email</span>
             </label>
-            <div class="input input-bordered">
+            <div class="input input-bordered flex items-center">
               {{ user.email }}
             </div>
           </div>
 
-          <div class="form-control mt-4">
+          <div class="form-control w-full mt-4">
             <label class="label">
               <span class="label-text">Nombre de usuario</span>
             </label>
-            <div class="input input-bordered">
+            <div class="input input-bordered  flex items-center">
               {{ user.username || 'No especificado' }}
             </div>
           </div>
@@ -41,10 +40,9 @@
             >
               Cerrar Sesión
             </button>
-          </div>
-        </div>
       </div>
     </div>
+
 
     <div v-else class="alert alert-error">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

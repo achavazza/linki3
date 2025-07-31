@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar bg-base-100 shadow-md">
+  <header class="navbar bg-base-100 shadow-sm">
     <div class="container flex mx-auto px-4">
       <div class="flex-1">
         <!-- Logo -->
@@ -15,13 +15,7 @@
         >
           Home
         </RouterLink>
-        <RouterLink 
-          to="/about" 
-          active-class="btn-active" 
-          class="btn btn-ghost"
-        >
-          About
-        </RouterLink>
+        
 
         <!-- Mostrar si NO está logueado -->
         <template v-if="!user">
@@ -171,10 +165,11 @@
       </template>
     </nav>
   </header>
-
-  <main class="container mx-auto max-w-xl p-6 mt-6 bg-base-100 rounded-3xl border border-base-300 mb-10">
-    <RouterView />
-  </main>
+  <div class="min-h-80">
+    <main class="container mx-auto max-w-xl p-6 mt-6 bg-base-100 rounded-3xl border border-base-300 mb-10">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
 <script setup>

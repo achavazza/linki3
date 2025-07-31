@@ -1,27 +1,16 @@
 <template>
-  <div v-if="profileNotFound || !profileActive" class="hero min-h-screen bg-base-200">
-    <div class="hero-content text-center">
-      <div class="max-w-md">
-        <h1 class="text-5xl font-bold">Perfil no encontrado</h1>
-        <p class="py-6">El perfil que estás buscando no existe o ha sido desactivado.</p>
-        <router-link to="/" class="btn btn-primary">
-          Volver al inicio
-        </router-link>
-      </div>
-    </div>
-  </div>
+  
 
-  <div v-else class="container mx-auto px-4 py-8">
-    <div class="card bg-base-100 shadow-lg">
-      <div class="card-body items-center text-center">
-        <h1 class="card-title text-3xl">{{ displayName }}</h1>
-        <h2 v-if="tagline" class="text-xl text-gray-600">{{ tagline }}</h2>
-        <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
-      </div>
+  <div v-if="!profileNotFound || profileActive"  class="container mx-auto">
+
+    <div class="items-center text-center">
+      <h1 class="text-center heading text-3xl font-extrabold">{{ displayName }}</h1>
+      <h2 v-if="tagline" class="text-xl text-gray-600 font-bold">{{ tagline }}</h2>
+      <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
     </div>
 
-    <div v-if="links.length" class="card bg-base-100 shadow-lg mt-6">
-      <div class="card-body">
+
+    <div v-if="links.length" class=" bg-base-100 mt-5 pt-5 border-t-2  border-base-200">
         <div class="space-y-3">
           <a
             v-for="link in links"
@@ -33,7 +22,18 @@
           >
             {{ link.title }}
           </a>
-        </div>
+
+      </div>
+    </div>
+  </div>
+  <div v-else>
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-2xl font-bold">Perfil no encontrado</h1>
+        <p class="py-6">El perfil que estás buscando no existe o ha sido desactivado.</p>
+        <router-link to="/" class="btn btn-primary">
+          Volver al inicio
+        </router-link>
       </div>
     </div>
   </div>

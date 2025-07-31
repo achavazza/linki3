@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="max-w-2xl mx-auto">
     <h2 class="text-2xl font-bold text-center mb-6">Editar Perfil</h2>
 
     <form @submit.prevent="handleSave" class="space-y-6">
@@ -43,18 +43,18 @@
       <div class="form-control">
         <h3 class="text-lg font-semibold mb-2">Links</h3>
         
-        <div v-for="(link, index) in links" :key="index" class="flex gap-3 items-center mb-2">
+        <div v-for="(link, index) in links" :key="index" class="flex gap-2 items-center mb-2">
           <template v-if="shouldShowTitleInput(link.type)">
             <input
               v-model="link.title"
               placeholder="Título del link"
-              class="input input-bordered flex-1"
+              class="input input-bordered flex-[1] max-w-[150px]"
               :class="{ 'input-error': link.error }"
               @input="link.error = false"
             />
           </template>
           <template v-else>
-            <div class="input flex-1 bg-base-200">
+            <div class="content-center input flex-[1] max-w-[150px] bg-base-200">
               {{ getLinkTypeLabel(link.type) }}
             </div>
           </template>
@@ -69,11 +69,11 @@
 
           <button
             type="button"
-            class="btn btn-circle btn-sm btn-error"
+            class="btn btn-square btn-sm btn-error size-10"
             @click="removeLink(index)"
             aria-label="Eliminar link"
           >
-            ✕
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /> </svg>
           </button>
         </div>
 
@@ -85,31 +85,31 @@
           >
             + Sitio Web
           </button>
-          <button
+           <button
             type="button"
             @click="addLink('instagram')"
-            class="btn btn-primary btn-sm bg-pink-600 border-pink-600"
+            class="btn btn-primary btn-sm bg-pink-400 border-pink-600 hover:bg-pink-500 hover:border-pink-600 hover:text-white"
           >
             + Instagram
           </button>
           <button
             type="button"
             @click="addLink('facebook')"
-            class="btn btn-primary btn-sm bg-blue-800 border-blue-800"
+            class="btn btn-primary btn-sm bg-blue-400 border-blue-600  hover:bg-blue-500 hover:border-blue-600 hover:text-white"
           >
             + Facebook
           </button>
           <button
             type="button"
             @click="addLink('whatsapp')"
-            class="btn btn-primary btn-sm bg-green-600 border-green-600"
+            class="btn btn-primary btn-sm bg-green-400 border-green-600  hover:bg-green-500 hover:border-green-600 hover:text-white"
           >
             + WhatsApp
           </button>
           <button
             type="button"
             @click="addLink('email')"
-            class="btn btn-primary btn-sm bg-gray-600 border-gray-600"
+            class="btn btn-primary btn-sm bg-gray-400 border-gray-600  hover:bg-gray-500 hover:border-gray-600 hover:text-white"
           >
             + Email
           </button>
@@ -167,7 +167,7 @@
 
     <section class="mt-10" v-if="profileSlug">
       <h3 class="text-lg font-semibold mb-2">Perfil público</h3>
-      <div class="card bg-base-100 shadow">
+      <div class="card bg-base-100 border-base-200 border rounded-xl ">
         <div class="card-body flex flex-col md:flex-row md:justify-between md:items-end gap-4">
           <div class="flex-1">
             <h2 class="card-title truncate">{{ displayName }}</h2>
@@ -190,20 +190,22 @@
       </div>
     </section>
 
-    <div class="flex justify-center gap-4 mt-4">
-      <button 
-        @click="downloadQr" 
-        class="btn btn-primary"
-      >
-        Descargar QR
-      </button>
-      <button 
-        @click="downloadQrSvg" 
-        class="btn btn-primary"
-      >
-        Descargar QR SVG
-      </button>
-    </div>
+    <!-- 
+      <div class="flex justify-center gap-4 mt-4">
+            <button 
+            @click="downloadQr" 
+            class="btn btn-primary"
+            >
+            Descargar QR
+          </button>
+          <button 
+          @click="downloadQrSvg" 
+          class="btn btn-primary"
+          >
+          Descargar QR SVG
+        </button>
+      </div>
+      -->
 
     <div class="alert alert-error mt-10">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -238,6 +240,7 @@ import { useToast } from 'vue-toastification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useUserStore } from '@/stores/users'
 import { useLinkTypesStore } from '@/stores/linkTypes'
+import QrcodeVue from 'qrcode.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -267,7 +270,7 @@ const {
   loadProfile
 } = useProfiles(profileId)
 
-const { downloadQr, downloadQrSvg, QrcodeVue } = useQr()
+const { downloadQr, downloadQrSvg,  } = useQr()
 
 const getLinkTypeLabel = (type) => linkTypesStore.getLinkType(type).label
 const shouldShowTitleInput = (type) => linkTypesStore.shouldShowTitleInput(type)
