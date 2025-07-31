@@ -45,11 +45,13 @@ const router = createRouter({
       path: '/u/:username',
       name: 'PublicProfile',
       component: () => import('@/views/PublicProfile.vue'),
+      meta: { layout: 'public' }
     },
     {
       path: '/p/:slug',
       name: 'PublicProfile',
       component: () => import('@/views/PublicProfile.vue'),
+      meta: { layout: 'public' }
     },
     {
       path: '/profiles',

@@ -15,7 +15,7 @@
       <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
     </div>
 
-    <div v-if="links.length" class="bg-base-100 mt-5 pt-5 border-t-2 border-base-200">
+    <div v-if="links.length" class=" mt-5 pt-5 border-t-2 border-base-200">
       <div class="space-y-3">
         <a
           v-for="link in links"
@@ -42,9 +42,11 @@
       <div class="max-w-md">
         <h1 class="text-2xl font-bold">Perfil no encontrado</h1>
         <p class="py-6">El perfil que estás buscando no existe o ha sido desactivado.</p>
-        <router-link to="/" class="btn btn-primary">
-          Volver al inicio
-        </router-link>
+        <!--
+          <router-link to="/" class="btn btn-primary">
+            Volver al inicio
+          </router-link>
+          -->
       </div>
     </div>
   </div>
