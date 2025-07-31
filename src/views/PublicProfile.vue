@@ -1,7 +1,6 @@
 <template>
   
-
-  <div v-if="!profileNotFound || profileActive"  class="container mx-auto">
+  <div v-if="!profileNotFound||profileActive === true"  class="container mx-auto">
 
     <div class="items-center text-center">
       <h1 class="text-center heading text-3xl font-extrabold">{{ displayName }}</h1>
@@ -18,11 +17,15 @@
             :href="helpers.formatUrl(link.url, link.type)"
             target="_blank"
             rel="noopener noreferrer"
-            class="btn btn-primary btn-block"
-          >
-            {{ link.title }}
+            class="btn btn-primary btn-block flex items-center gap-2"
+          > 
+            <span
+              v-if="linkTypesStore.getLinkType(link.type)?.icon"
+              class="inline-block"
+              v-html="linkTypesStore.getLinkType(link.type).icon"
+            ></span>
+            <span>{{ link.title || link.url }}</span>
           </a>
-
       </div>
     </div>
   </div>
@@ -45,6 +48,10 @@ import { useRoute } from 'vue-router'
 import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { useProfiles } from '@/composables/useProfiles'
+import { useLinkTypesStore } from '@/stores/linkTypes'
+
+const linkTypesStore = useLinkTypesStore()
+
 
 const route = useRoute()
 const slug = route.params.slug
@@ -60,6 +67,11 @@ const {
   error,
   loadProfile
 } = useProfiles(null, slug)
+
+const getLinkIcon = (type) => {
+  const typeData = linkTypesStore.getLinkType(type)
+  return typeData?.icon || ''
+}
 
 onMounted(async () => {
   try {

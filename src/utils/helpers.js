@@ -20,64 +20,64 @@ export const helpers = {
       .replace(/-+$/, '')
   },
 
-  
   /**
    * Formatea una URL asegurando que tenga protocolo http/https
    * @param {string} url - URL a formatear
+   * @param {string} type - Tipo de enlace (opcional)
    * @returns {string} - URL formateada
    */
   formatUrl(url, type = '') {
-  if (!url) return '';
+    if (!url) return ''
 
-  url = url.trim();
+    url = url.trim()
+
+    
 
     switch (type) {
       case 'email':
         // Asegura el esquema mailto:
-        url = url.replace(/^mailto:/, '');
-        return `mailto:${url}`;
+        url = url.replace(/^mailto:/, '')
+        return `mailto:${url}`
 
       case 'whatsapp':
         // Extrae solo los números
-        const whatsappNumber = url.replace(/[^\d]/g, '');
-        return `https://wa.me/${whatsappNumber}`;
+        const whatsappNumber = url.replace(/[^\d]/g, '')
+        return `https://wa.me/${whatsappNumber}`
 
       case 'phone':
       case 'tel':
-        const phoneNumber = url.replace(/[^\d\+]/g, '');
-        return `tel:${phoneNumber}`;
+        const phoneNumber = url.replace(/[^\d\+]/g, '')
+        return `tel:${phoneNumber}`
 
       case 'website':
         // Si ya tiene http(s), no tocar
-        if (/^https?:\/\//i.test(url)) return url;
-        return `https://${url}`;
+        if (/^https?:\/\//i.test(url)) return url
+        return `https://${url}`
 
       default:
-        // Manejo general: email, tel, wa, o url por defecto
+        // Detección automática por contenido
         if (url.includes('@')) {
-          return `mailto:${url.replace(/^mailto:/, '')}`;
+          return `mailto:${url.replace(/^mailto:/, '')}`
         }
 
         if (/^[\d\+][\d\s\-\(\)]+$/.test(url)) {
-          return `tel:${url.replace(/[^\d\+]/g, '')}`;
+          return `tel:${url.replace(/[^\d\+]/g, '')}`
         }
 
         if (/^https?:\/\/wa\.me\/.+$/i.test(url) ||
             /^https?:\/\/api\.whatsapp\.com\/send\?.+$/i.test(url)) {
-          return url;
+          return url
         }
 
         if (/^[\d\s\-\(\)]+$/.test(url)) {
-          return `https://wa.me/${url.replace(/[^\d]/g, '')}`;
+          return `https://wa.me/${url.replace(/[^\d]/g, '')}`
         }
 
-        // Si tiene http(s) ya está bien
         if (/^https?:\/\//i.test(url)) {
-          return url;
+          return url
         }
 
-        // Asume que es sitio web
-        return `https://${url}`;
+        return `https://${url}`
     }
   },
 
@@ -90,13 +90,13 @@ export const helpers = {
   downloadFile(content, filename, type = '') {
     const blob = new Blob([content], { type })
     const url = URL.createObjectURL(blob)
-    
+
     const a = document.createElement('a')
     a.href = url
     a.download = filename
     document.body.appendChild(a)
     a.click()
-    
+
     setTimeout(() => {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
@@ -163,21 +163,21 @@ export const helpers = {
       day: 'numeric',
       ...options
     }
-    
+
     const dateObj = date instanceof Date ? date : new Date(date)
     return dateObj.toLocaleDateString(locale, defaultOptions)
   },
 
   /**
-     * Extrae mensajes de error de diferentes formatos
-     * @param {Error|object|string} error - Objeto de error
-     * @returns {string} - Mensaje de error legible
-     */
-    extractErrorMessage(error) {
+   * Extrae mensajes de error de diferentes formatos
+   * @param {Error|object|string} error - Objeto de error
+   * @returns {string} - Mensaje de error legible
+   */
+  extractErrorMessage(error) {
     if (!error) return ''
     if (typeof error === 'string') return error
     if (error.message) return error.message
     if (error.error?.message) return error.error.message
     return 'Ocurrió un error inesperado'
-    }
+  }
 }

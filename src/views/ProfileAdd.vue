@@ -167,7 +167,7 @@
       <div class="flex gap-4 justify-end mt-6">
         <router-link
           to="/profiles"
-          class="btn btn-ghost"
+          class="btn btn-default"
         >
           Cancelar
         </router-link>

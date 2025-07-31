@@ -102,6 +102,7 @@ export const useProfiles = (profileId = null, slug = null) => {
         { profile_id: profileData.id },
         'position'
       )
+      console.log('Links cargados desde API:', linksData)
       if (linksError) throw linksError
 
       // Asegurar que los links tengan el type correcto
@@ -125,7 +126,7 @@ export const useProfiles = (profileId = null, slug = null) => {
         .map((link, i) => ({
           id: link.id || undefined,
           title: link.title?.trim() || '',
-          url: helpers.formatUrl(link.url?.trim()) || '',
+          url: helpers.formatUrl(link.url?.trim(), link.type) || '',
           position: i,
           profile_id: profileId,
           type: link.type || 'custom' // Asegurar que siempre tenga un valor
@@ -207,7 +208,7 @@ export const useProfiles = (profileId = null, slug = null) => {
       const linksToSave = links.map((link, i) => ({
         ...link,
         title: link.title.trim(),
-        url: helpers.formatUrl(link.url.trim()),
+        url: helpers.formatUrl(link.url.trim(), link.type),
         position: i,
         profile_id: profileId
       }))

@@ -3,7 +3,11 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Mis Perfiles</h1>
       <router-link to="/profiles/new" class="btn btn-default">
-        + Nuevo Perfil
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+
+        Agregar Perfil
       </router-link>
     </div>
 <!-- 
@@ -45,7 +49,7 @@
                     @change="toggleProfileActive(profile)"
                     class="toggle toggle-primary"
                     />
-                    <div class="badge" :class="profile.active ? 'badge-success' : 'badge-error'">
+                    <div class="badge" :class="profile.active ? 'badge-success' : 'badge-default'">
                       {{ profile.active ? 'Activo' : 'Inactivo' }}
                     </div>
                   </label>
@@ -57,7 +61,7 @@
                   <router-link :to="`/profiles/${profile.id}/edit`" class="btn  btn-default btn-sm">
                     Editar
                   </router-link>
-                   <a href="#" @click="openQrModal(profile.slug)" class="btn btn-sm btn-default" >
+                   <a href="#" @click.prevent="openQrModal(profile.slug)" class="btn btn-sm btn-default" >
                     Descargar QR
                   </a>
                 </div>
@@ -86,7 +90,7 @@
 
 <script setup>
 import { useUserStore } from '@/stores/users'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, nextTick } from 'vue'
 import { useToast } from 'vue-toastification'
 import QrcodeVue from 'qrcode.vue'
 import QrModal from '@/components/QrModal.vue'
@@ -122,9 +126,10 @@ const toggleProfileActive = async (profile) => {
   }
 }
 
-const openQrModal = (slug) => {
+const openQrModal = async (slug) => {
   selectedProfileSlug.value = slug
-  qrModal.value?.openModal() // Now calling your custom method
+  await nextTick()
+  qrModal.value?.openModal()
 }
 
 onMounted(async () => {
