@@ -70,7 +70,7 @@
 
             <div class="flex flex-col items-end gap-2">
               <a :href="`${baseUrl}/p/${profile.slug}`" target="_blank" class="text-primary text-xs hover:underline">
-                /{{ profile.slug }}
+                @{{ profile.slug }}
               </a>
               <div class="w-36 h-36">
                 <qrcode-vue :value="`${baseUrl}/p/${profile.slug}`" :size="150" />

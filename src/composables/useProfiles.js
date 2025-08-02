@@ -4,8 +4,9 @@ import { useLinkTypesStore } from '@/stores/linkTypes'
 import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { v4 as uuidv4 } from 'uuid'
+import { supabase } from '@/supabase'
 
-export const useProfiles = (profileId = null, slug = null) => {
+export const useProfiles = (profileId = null, initialSlug = null) => {
   const userStore = useUserStore()
   const linkTypesStore = useLinkTypesStore()
   
@@ -17,11 +18,62 @@ export const useProfiles = (profileId = null, slug = null) => {
     loading: ref(false),
     error: ref(''),
     errorField: ref(''),
-    profileSlug: ref('')
+    profileSlug: ref(initialSlug || ''),
+    slug: ref(''),
+    slugAvailability: ref('') // '', 'checking', 'available', 'unavailable'
   }
 
-  const generatedSlug = computed(() => helpers.generateSlug(state.displayName.value))
-  const publicUrl = computed(() => `${window.location.origin}/p/${state.profileSlug.value}`)
+  const publicUrl = computed(() => `${window.location.origin}/p/${state.slug.value || state.profileSlug.value}`)
+
+  // Validación del slug
+  const validateSlug = (slug) => {
+    return slug.length >= 3 && /^[a-z0-9-]+$/.test(slug)
+  }
+
+  // Verificación de disponibilidad del slug
+  // En useProfiles.js - reemplaza la función checkSlugAvailability con esta versión
+  const checkSlugAvailability = async () => {
+    if (!state.slug.value || !validateSlug(state.slug.value)) {
+      return;
+    }
+
+    try {
+      state.slugAvailability.value = 'checking';
+      
+      // Solo verificamos disponibilidad sin comparar con ID para nuevos perfiles
+      const { available, error: checkError } = await api.checkSlugAvailability(
+        state.slug.value,
+        'profiles',
+        profileId || undefined // Solo pasa el ID si existe
+      );
+      
+      if (checkError) throw checkError;
+      
+      state.slugAvailability.value = available ? 'available' : 'unavailable';
+    } catch (err) {
+      state.slugAvailability.value = 'unavailable';
+      console.error('Error checking slug availability:', err);
+    }
+  };
+
+  // Debounce para verificación automática
+  let slugCheckTimeout
+  const onSlugInput = () => {
+    // Resetear estado
+    state.slugAvailability.value = ''
+    
+    // Cancelar timeout anterior
+    if (slugCheckTimeout) {
+      clearTimeout(slugCheckTimeout)
+    }
+    
+    // Verificar después de 500ms de inactividad
+    if (state.slug.value && validateSlug(state.slug.value)) {
+      slugCheckTimeout = setTimeout(() => {
+        checkSlugAvailability()
+      }, 500)
+    }
+  }
 
   const addLink = (type = 'custom') => {
     const linkType = linkTypesStore.getLinkType(type)
@@ -33,7 +85,8 @@ export const useProfiles = (profileId = null, slug = null) => {
       url: '',
       position: state.links.value.length,
       profile_id: profileId || null,
-      needsName: linkType.needsName || false
+      needsName: linkType.needsName || false,
+      error: false
     })
   }
 
@@ -80,8 +133,8 @@ export const useProfiles = (profileId = null, slug = null) => {
 
       let profileData
       
-      if (slug) {
-        const { data, error } = await api.getBySlug('profiles', slug)
+      if (initialSlug) {
+        const { data, error } = await api.getFullProfileBySlug(initialSlug)
         if (error || !data) throw new Error('Perfil no encontrado')
         profileData = data
       } else if (profileId) {
@@ -96,21 +149,15 @@ export const useProfiles = (profileId = null, slug = null) => {
       state.tagline.value = profileData.tagline || ''
       state.description.value = profileData.description || ''
       state.profileSlug.value = profileData.slug || ''
-
-      const { data: linksData, error: linksError } = await api.getAll(
-        'links', 
-        { profile_id: profileData.id },
-        'position'
-      )
-      console.log('Links cargados desde API:', linksData)
-      if (linksError) throw linksError
+      state.slug.value = profileData.slug || ''
 
       // Asegurar que los links tengan el type correcto
-      state.links.value = (linksData || []).map(link => {
+      state.links.value = (profileData.links || []).map(link => {
         const linkType = linkTypesStore.getLinkType(link.type)
         return {
           ...link,
-          needsName: linkType.needsName || false
+          needsName: linkType.needsName || false,
+          error: false
         }
       })
     } catch (err) {
@@ -121,61 +168,85 @@ export const useProfiles = (profileId = null, slug = null) => {
   }
 
   const prepareLinks = () => {
-      return state.links.value
-        .filter(link => !link._deleted)
-        .map((link, i) => ({
-          id: link.id || undefined,
-          title: link.title?.trim() || '',
-          url: helpers.formatUrl(link.url?.trim(), link.type) || '',
-          position: i,
-          profile_id: profileId,
-          type: link.type || 'custom' // Asegurar que siempre tenga un valor
-        }))
-    }
+    return state.links.value
+      .filter(link => !link._deleted)
+      .map((link, i) => ({
+        id: link.id || undefined,
+        title: link.title?.trim() || '',
+        url: helpers.formatUrl(link.url?.trim(), link.type) || '',
+        position: i,
+        profile_id: profileId,
+        type: link.type || 'custom'
+      }))
+  }
 
   const saveProfile = async () => {
     try {
-      state.loading.value = true
-      state.error.value = ''
-      state.errorField.value = ''
+      state.loading.value = true;
+      state.error.value = '';
+      state.errorField.value = '';
 
       if (!userStore.user) {
-        throw new Error('Debes iniciar sesión para guardar un perfil')
+        throw new Error('Debes iniciar sesión para guardar un perfil');
       }
 
       if (!state.displayName.value.trim()) {
-        state.errorField.value = 'displayName'
-        throw new Error('El nombre público es obligatorio')
+        state.errorField.value = 'displayName';
+        throw new Error('El nombre público es obligatorio');
       }
 
-      validateLinks(state.links.value)
-      const formattedLinks = prepareLinks()
+      // Validar slug si se proporciona
+      if (state.slug.value && !validateSlug(state.slug.value)) {
+        state.errorField.value = 'slug';
+        throw new Error('El slug solo puede contener letras minúsculas, números y guiones. Mínimo 3 caracteres.');
+      }
+
+      // Verificar disponibilidad del slug si se proporciona
+      if (state.slug.value) {
+        const { available, error: checkError } = await api.checkSlugAvailability(
+          state.slug.value,
+          'profiles',
+          profileId || undefined // Solo pasa el ID si existe
+        );
+
+        if (checkError) throw checkError;
+        if (!available) {
+          state.errorField.value = 'slug';
+          throw new Error('El slug ya está en uso');
+        }
+      }
+
+      validateLinks(state.links.value);
+      const formattedLinks = prepareLinks();
 
       if (profileId) {
-        return await updateExistingProfile(formattedLinks)
+        return await updateExistingProfile(formattedLinks);
       } else {
-        return await createNewProfile(formattedLinks)
+        return await createNewProfile(formattedLinks);
       }
     } catch (err) {
-      state.error.value = err.message
-      console.error('Error en saveProfile:', err)
-      return false
+      state.error.value = err.message;
+      console.error('Error en saveProfile:', err);
+      return false;
     } finally {
-      state.loading.value = false
+      state.loading.value = false;
     }
   }
 
   const createNewProfile = async (links) => {
-    const { available, error: slugError } = await api.checkSlugAvailability(generatedSlug.value)
+    // Si no se proporciona slug, generar uno basado en el nombre
+    const finalSlug = state.slug.value || helpers.generateSlug(state.displayName.value)
+
+    const { available, error: slugError } = await api.checkSlugAvailability(finalSlug)
     if (slugError || !available) {
-      throw new Error('El nombre público ya está en uso. Por favor, elige otro.')
+      throw new Error('El slug ya está en uso. Por favor, elige otro.')
     }
 
     const profileData = {
       display_name: state.displayName.value.trim(),
       tagline: state.tagline.value.trim(),
       description: state.description.value.trim(),
-      slug: generatedSlug.value,
+      slug: finalSlug,
       active: true,
       user_id: userStore.user.id
     }
@@ -200,7 +271,8 @@ export const useProfiles = (profileId = null, slug = null) => {
       const { error: profileError } = await userStore.updateProfile(profileId, {
         display_name: state.displayName.value.trim(),
         tagline: state.tagline.value.trim(),
-        description: state.description.value.trim()
+        description: state.description.value.trim(),
+        slug: state.slug.value.trim() // Actualizar el slug si ha cambiado
       })
       
       if (profileError) throw profileError
@@ -227,11 +299,13 @@ export const useProfiles = (profileId = null, slug = null) => {
 
   return {
     ...state,
-    slug: generatedSlug,
     publicUrl,
     addLink,
     removeLink,
     loadProfile,
-    saveProfile
+    saveProfile,
+    validateSlug,
+    checkSlugAvailability,
+    onSlugInput
   }
 }

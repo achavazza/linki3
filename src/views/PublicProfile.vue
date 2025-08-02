@@ -10,7 +10,7 @@
   <!-- Profile found and active -->
   <div v-else-if="!profileNotFound && profileActive" class="container mx-auto">
     <div class="items-center text-center">
-      <h1 class="text-center heading text-3xl font-extrabold">{{ displayName }}</h1>
+      <h1 v-if="displayName"class="text-center heading text-3xl font-bold">{{ displayName }}</h1>
       <h2 v-if="tagline" class="text-xl text-gray-600 font-bold">{{ tagline }}</h2>
       <p v-if="description" class="py-4 whitespace-pre-line">{{ description }}</p>
     </div>
@@ -59,6 +59,7 @@ import { api } from '@/utils/api'
 import { helpers } from '@/utils/helpers'
 import { useProfiles } from '@/composables/useProfiles'
 import { useLinkTypesStore } from '@/stores/linkTypes'
+import { supabase } from '@/supabase'
 
 const linkTypesStore = useLinkTypesStore()
 
@@ -92,7 +93,26 @@ onMounted(async () => {
       profileNotFound.value = true
       profileActive.value = false
     } else {
-      const { data: profileData, error: profileError } = await api.getBySlug('profiles', slug)
+      // Intentar buscar por handle primero, luego por slug
+      let profileData = null
+      let profileError = null
+      
+      // Buscar por handle
+      const { data: handleData, error: handleError } = await api.executeQuery(
+        supabase.from('profiles')
+          .select('*')
+          .eq('handle', slug)
+          .single()
+      )
+      
+      if (!handleError && handleData) {
+        profileData = handleData
+      } else {
+        // Si no se encuentra por handle, buscar por slug
+        const { data: slugData, error: slugError } = await api.getBySlug('profiles', slug)
+        profileData = slugData
+        profileError = slugError
+      }
       
       if (profileError || !profileData) {
         profileNotFound.value = true

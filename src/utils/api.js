@@ -102,7 +102,7 @@ export const api = {
    * Crea un nuevo registro
    * @template T
    * @param {string} table - Nombre de la tabla
-   * @param {Partial<T>} record - Datos del registro
+   * @param {Partial<T>|Partial<T>[]} records - Datos del registro o array de registros
    * @returns {Promise<QueryResult<T>>}
    */
   async create(table, records) {
@@ -152,18 +152,176 @@ export const api = {
    * Verifica si un slug está disponible
    * @param {string} slug - Slug a verificar
    * @param {string} [table='profiles'] - Tabla donde verificar
-   * @param {string} [field='slug'] - Campo a verificar
+   * @param {string} [excludeId] - ID a excluir (para actualizaciones)
    * @returns {Promise<SlugAvailability>}
    */
-  async checkSlugAvailability(slug, table = 'profiles', field = 'slug') {
-    const { data, error } = await this.executeQuery(
-      supabase.from(table).select('id').eq(field, slug).maybeSingle(),
-      'Error al verificar disponibilidad de slug'
-    )
-    
-    return {
-      available: !data,
-      error
+  async checkSlugAvailability(slug, table = 'profiles', excludeId = null) {
+    try {
+      let query = supabase.from(table)
+        .select('id')
+        .eq('slug', slug);
+      
+      // Solo agregamos la condición neq si tenemos un excludeId válido
+      if (excludeId) {
+        query = query.neq('id', excludeId);
+      }
+      
+      const { data, error } = await query.maybeSingle();
+      
+      if (error) {
+        console.error('Error checking slug availability:', error);
+        return { available: false, error: new Error(error.message) };
+      }
+      
+      return {
+        available: !data,
+        error: null
+      };
+    } catch (err) {
+      console.error('Error in checkSlugAvailability:', err);
+      return {
+        available: false,
+        error: err instanceof Error ? err : new Error(String(err))
+      };
+    }
+  },
+
+  /**
+   * Obtiene un perfil completo por slug (con sus links)
+   * @param {string} slug - Slug del perfil
+   * @returns {Promise<QueryResult>}
+   */
+  async getFullProfileBySlug(slug) {
+    try {
+      // 1. Obtener el perfil principal
+      const { data: profile, error: profileError } = await this.getBySlug('profiles', slug)
+      
+      if (profileError || !profile) {
+        return { data: null, error: profileError || new Error('Perfil no encontrado') }
+      }
+      
+      // 2. Obtener los links del perfil
+      const { data: links, error: linksError } = await this.getAll(
+        'links',
+        { profile_id: profile.id },
+        'position'
+      )
+      
+      if (linksError) {
+        console.error('Error al obtener links del perfil:', linksError)
+        // Devolver el perfil sin links en este caso
+        return { data: { ...profile, links: [] }, error: null }
+      }
+      
+      return { 
+        data: { 
+          ...profile, 
+          links: links || [] 
+        }, 
+        error: null 
+      }
+    } catch (err) {
+      console.error('Error en getFullProfileBySlug:', err)
+      return { data: null, error: err }
+    }
+  },
+
+  /**
+   * Crea un nuevo perfil con validación de slug
+   * @param {Object} profileData - Datos del perfil (debe incluir slug)
+   * @param {Array} [links=[]] - Links del perfil
+   * @returns {Promise<QueryResult>}
+   */
+  async createProfileWithSlug(profileData, links = []) {
+    try {
+      // Validar que el slug venga en los datos
+      if (!profileData.slug) {
+        throw new Error('El slug es requerido para crear un perfil')
+      }
+
+      // 1. Verificar que el slug esté disponible
+      const { available, error: slugError } = await this.checkSlugAvailability(profileData.slug)
+      
+      if (slugError) throw slugError
+      if (!available) throw new Error('El slug ya está en uso')
+
+      // 2. Crear el perfil
+      const { data: profile, error: profileError } = await this.create('profiles', profileData)
+      
+      if (profileError || !profile) {
+        throw profileError || new Error('Error al crear el perfil')
+      }
+
+      // 3. Si hay links, crearlos
+      if (links.length > 0) {
+        const linksWithProfileId = links.map(link => ({
+          ...link,
+          profile_id: profile.id
+        }))
+
+        const { error: linksError } = await this.create('links', linksWithProfileId)
+        if (linksError) throw linksError
+      }
+
+      // 4. Devolver el perfil con sus links
+      return await this.getFullProfileBySlug(profile.slug)
+    } catch (err) {
+      console.error('Error en createProfileWithSlug:', err)
+      return { data: null, error: err instanceof Error ? err : new Error(String(err)) }
+    }
+  },
+
+  /**
+   * Actualiza un perfil y sus links con validación de slug
+   * @param {string} profileId - ID del perfil a actualizar
+   * @param {Object} profileData - Nuevos datos del perfil
+   * @param {Array} links - Nuevos links del perfil
+   * @returns {Promise<QueryResult>}
+   */
+  async updateProfileWithSlug(profileId, profileData, links = []) {
+    try {
+      // Si se está actualizando el slug, verificar disponibilidad
+      if (profileData.slug) {
+        const { available, error: slugError } = await this.checkSlugAvailability(
+          profileData.slug,
+          'profiles',
+          profileId
+        )
+        
+        if (slugError) throw slugError
+        if (!available) throw new Error('El nuevo slug ya está en uso')
+      }
+
+      // 1. Actualizar el perfil
+      const { data: profile, error: profileError } = await this.update(
+        'profiles',
+        profileId,
+        profileData
+      )
+      
+      if (profileError || !profile) {
+        throw profileError || new Error('Error al actualizar el perfil')
+      }
+
+      // 2. Actualizar los links (primero eliminar los existentes)
+      await this.deleteAllProfileLinks(profileId)
+
+      if (links.length > 0) {
+        const linksWithProfileId = links.map((link, index) => ({
+          ...link,
+          profile_id: profileId,
+          position: index
+        }))
+
+        const { error: linksError } = await this.create('links', linksWithProfileId)
+        if (linksError) throw linksError
+      }
+
+      // 3. Devolver el perfil actualizado con sus links
+      return await this.getFullProfileBySlug(profile.slug)
+    } catch (err) {
+      console.error('Error en updateProfileWithSlug:', err)
+      return { data: null, error: err instanceof Error ? err : new Error(String(err)) }
     }
   },
 
@@ -223,42 +381,43 @@ export const api = {
       return { data: null, count: 0, error: err instanceof Error ? err : new Error(String(err)) }
     }
   },
-  /**
- * Realiza una operación upsert (insertar o actualizar) en una tabla
- * @template T
- * @param {string} table - Nombre de la tabla
- * @param {Array<Partial<T>>} records - Datos a upsert
- * @param {string} [onConflict='id'] - Campo para conflicto
- * @returns {Promise<QueryResult<T[]>>}
- */
-async upsert(table, records, onConflict = 'id') {
-  return this.executeQuery(
-    supabase.from(table)
-      .upsert(records, { onConflict })
-      .select(),
-    `Error al hacer upsert en ${table}`
-  )
-},
 
-/**
- * Actualiza los links de un perfil (elimina los antiguos y crea nuevos)
- * @param {string} profileId - ID del perfil
- * @param {Array} links - Lista de links a guardar
- * @returns {Promise<QueryResult>}
- */
+  /**
+   * Realiza una operación upsert (insertar o actualizar) en una tabla
+   * @template T
+   * @param {string} table - Nombre de la tabla
+   * @param {Array<Partial<T>>} records - Datos a upsert
+   * @param {string} [onConflict='id'] - Campo para conflicto
+   * @returns {Promise<QueryResult<T[]>>}
+   */
+  async upsert(table, records, onConflict = 'id') {
+    return this.executeQuery(
+      supabase.from(table)
+        .upsert(records, { onConflict })
+        .select(),
+      `Error al hacer upsert en ${table}`
+    )
+  },
+
+  /**
+   * Actualiza los links de un perfil (elimina los antiguos y crea nuevos)
+   * @param {string} profileId - ID del perfil
+   * @param {Array} links - Lista de links a guardar
+   * @returns {Promise<QueryResult>}
+   */
   async updateProfileLinks(profileId, links) {
     try {
       // 1. Primero eliminar los links existentes
       const { error: deleteError } = await supabase
         .from('links')
         .delete()
-        .eq('profile_id', profileId);
+        .eq('profile_id', profileId)
       
-      if (deleteError) throw deleteError;
+      if (deleteError) throw deleteError
       
       // 2. Si no hay links para insertar, retornar éxito
       if (!links || links.length === 0) {
-        return { data: [], error: null };
+        return { data: [], error: null }
       }
       
       // 3. Preparar los datos para insertar (asegurando el campo type)
@@ -268,20 +427,20 @@ async upsert(table, records, onConflict = 'id') {
         position: link.position,
         profile_id: profileId,
         type: link.type || 'custom' // Valor por defecto si no viene type
-      }));
+      }))
       
       // 4. Insertar los nuevos links
       const { data, error } = await supabase
         .from('links')
         .insert(linksToInsert)
-        .select();
+        .select()
       
-      if (error) throw error;
+      if (error) throw error
       
-      return { data, error: null };
+      return { data, error: null }
     } catch (error) {
-      console.error('Error en updateProfileLinks:', error);
-      return { data: null, error };
+      console.error('Error en updateProfileLinks:', error)
+      return { data: null, error }
     }
   },
 
@@ -294,6 +453,22 @@ async upsert(table, records, onConflict = 'id') {
     return this.executeQuery(
       supabase.from('links').delete().eq('profile_id', profileId),
       `Error al eliminar links del perfil ${profileId}`
+    )
+  },
+
+  /**
+   * Obtiene perfiles sugeridos basados en búsqueda
+   * @param {string} searchTerm - Término de búsqueda
+   * @param {number} [limit=5] - Límite de resultados
+   * @returns {Promise<QueryResult>}
+   */
+  async searchProfiles(searchTerm, limit = 5) {
+    return this.executeQuery(
+      supabase.from('profiles')
+        .select('*')
+        .or(`display_name.ilike.%${searchTerm}%,slug.ilike.%${searchTerm}%`)
+        .limit(limit),
+      'Error al buscar perfiles'
     )
   }
 }

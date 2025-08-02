@@ -18,6 +18,49 @@
         </label>
       </div>
 
+      <!-- Cambiar todas las referencias de handle por slug -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Slug único</span>
+        </label>
+        <div class="flex gap-2">
+          <input
+            v-model="slug"
+            type="text"
+            placeholder="mi-perfil"
+            class="input input-bordered flex-1"
+            :class="{ 
+              'input-error': slug && !validateSlug(slug) || errorField === 'slug',
+              'input-success': slug && slugAvailability === 'available',
+              'input-warning': slug && slugAvailability === 'checking'
+            }"
+            @blur="validateSlug(slug)"
+            @input="onSlugInput"
+          />
+          <button
+            type="button"
+            class="btn btn-outline"
+            :disabled="!slug || !validateSlug(slug) || slugAvailability === 'checking'"
+            @click="checkSlugAvailability"
+          >
+            <span v-if="slugAvailability === 'checking'" class="loading loading-spinner loading-sm"></span>
+            {{ slugAvailability === 'checking' ? 'Verificando...' : 'Verificar' }}
+          </button>
+        </div>
+        <label v-if="slug && !validateSlug(slug)" class="label">
+          <span class="label-text-alt text-error">Solo letras, números y guiones. Mínimo 3 caracteres.</span>
+        </label>
+        <label v-if="slug && slugAvailability === 'available'" class="label">
+          <span class="label-text-alt text-success">✅ Slug disponible</span>
+        </label>
+        <label v-if="slug && slugAvailability === 'unavailable'" class="label">
+          <span class="label-text-alt text-error">❌ Slug no disponible</span>
+        </label>
+        <label v-if="errorField === 'slug'" class="label">
+          <span class="label-text-alt text-error">{{ error }}</span>
+        </label>
+      </div>
+
       <div class="form-control">
         <label class="label">
           <span class="label-text">Tagline</span>
@@ -264,13 +307,18 @@ const {
   errorField,
   profileSlug,
   publicUrl,
+  slug,
+  slugAvailability,
   addLink,
   removeLink,
   saveProfile,
-  loadProfile
-} = useProfiles(profileId)
+  loadProfile,
+  validateSlug,
+  checkSlugAvailability,
+  onSlugInput
+} = useProfiles(profileId, route.params.slug) // Asegúrate de pasar el slug aquí
 
-const { downloadQr, downloadQrSvg,  } = useQr()
+const { downloadQr, downloadQrSvg } = useQr()
 
 const getLinkTypeLabel = (type) => linkTypesStore.getLinkType(type).label
 const shouldShowTitleInput = (type) => linkTypesStore.shouldShowTitleInput(type)
@@ -330,6 +378,11 @@ const deleteProfile = async () => {
 }
 
 onMounted(() => {
-  loadProfile()
+  loadProfile().then(() => {
+    // Después de cargar el perfil, verificar disponibilidad del slug si existe
+    /*if (slug.value) {
+      checkSlugAvailability()
+    }*/
+  })
 })
 </script>
